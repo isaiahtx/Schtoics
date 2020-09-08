@@ -506,14 +506,16 @@ for i in meetings:
     f3.write('\nBEGIN:VEVENT\n')
     f3.write('DTSTART;TZID=America/Los_Angeles:' +
              str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + start + '00\n')
-    f3.write('DTEND;TZID=America/Los_Angeles:' + str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + end + '00\n')
+    f3.write('DTEND;TZID=America/Los_Angeles:'
+             + str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + end + '00\n')
 
     if i.bldg == 'RCLAS':
         f3.write('SUMMARY:' + i.code + ' ' + i.type + ' (ONLINE)' + '\n')
     else:
         f3.write('SUMMARY:' + i.code + ' ' + i.type + '\n')
 
-    f3.write('RRULE:FREQ=WEEKLY;WKST=SU;UNTIL=' + str(quarter_ends + datetime.timedelta(days=1)).replace('-', '') + 'T000000Z;BYDAY=' + i.days + '\n')
+    f3.write('RRULE:FREQ=WEEKLY;WKST=SU;UNTIL='
+             + str(quarter_ends + datetime.timedeslta(days=1)).replace('-', '') + 'T000000Z;BYDAY=' + i.days + '\n')
 
     for j in holidays:
         if weekdays[j.weekday()] in i.days:
