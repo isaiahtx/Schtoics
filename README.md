@@ -16,6 +16,6 @@ Provided UCSD's website does not change, it should work indefinitely.
 * Choose "Create new Calendar"
 * Name it something like "UCSD Schedule" and set the timezone to LA
 * Choose "Import & Export" in the leftmost menu
-* Choose "Select file from your computer" and navigate to the Calendar.ics file located in the same directory as the script
+* Choose "Select file from your computer" and navigate to the Calendar.ics file (should be located in the same directory as the script)
 * Choose the calendar you created from the dropdown
 * Click import
