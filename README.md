@@ -19,3 +19,6 @@ Provided UCSD's website does not change, it should work indefinitely.
 * Choose "Select file from your computer" and navigate to the Calendar.ics file (should be located in the same directory as the script)
 * Choose the calendar you created from the dropdown
 * Click import
+
+# License
+[htps://choosealicense.com/licenses/gpl-3.0/](GNU GPLv3)
