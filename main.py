@@ -88,12 +88,12 @@ if choice == '1':
 
     clear()
     print('''------------------------------------------------------------------------
-Extracting from WebReg:
-------------------------------------------------------------------------
-ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD'S WEBSITE
-------------------------------------------------------------------------
-What is your UCSD username: ''' + user + '''
-What is your password: ''' + censored_password)
+             Extracting from WebReg:
+             ------------------------------------------------------------------------
+             ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD'S WEBSITE
+             ------------------------------------------------------------------------
+             What is your UCSD username: ''' + user + '''
+             What is your password: ''' + censored_password)
 
     print('------------------------------------------------------------------------')
     print('Starting webdriver, be patient, this process may take long...')
