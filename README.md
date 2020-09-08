@@ -21,5 +21,4 @@ Provided UCSD's website does not change, it should work indefinitely.
 * Click import
 
 # License
-
-[GNU GPLv3](htps://choosealicense.com/licenses/gpl-3.0/)
+[GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
