@@ -609,7 +609,7 @@ f3.write(
     '\nTZOFFSETTO:-0800\nTZNAME:PST\nDTSTART:19701101T020000\nRRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU\nEND:STANDARD'
     '\nEND:VTIMEZONE\n')  # Basic initialization stuff about timezone, the type of calendar, etc.
 
-# This loop goes through every event Recurring event object and adds a calendar event to the Calendar.ics file
+# This loop goes through every Recurring event object and adds a calendar event to the Calendar.ics file
 for i in recurring_events:
     f3.write('\nBEGIN:VEVENT\n')  # Initialize the calendar event
 
