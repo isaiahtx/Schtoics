@@ -45,9 +45,8 @@ def remove_line(text, line_start) -> str:
 
 # TODO: Decide if this should be moved to another module or not
 # TODO: Decide if this should be moved to another module or not
-# TODO: Rename Meeting class to 'Recurring'
 # This class is used to store the identifying information for any recurring event
-class Meeting:
+class Recurring:
     def __init__(self, code, name, type, sect, prof, days, time, bldg, room):
         self.code = code
         self.name = name
@@ -61,10 +60,9 @@ class Meeting:
 
 
 # TODO: Decide if this should be moved to another module or not
-# TODO: Rename Final class to 'OneTime'
 # TODO: Remove/rename any __init__ parameters that are either unused or shadowed by outer scope
 # This class is used to store the identifying information for any one-time event
-class Final:
+class OneTime:
     def __init__(self, code, name, prof, date, time, bldg, room, type):
         self.code = code
         self.name = name
@@ -402,6 +400,10 @@ if '<!DOCTYPE html>' in academic_calendar:
     print('Too far in the future or too far in the past.\nExiting...')
     sys.exit()
 
+# Removes ICS header information from academic_calendar, as well as adds a newline before every event for readability's
+# sake.
+academic_calendar = academic_calendar[academic_calendar.find('BEGIN:VEVENT'):].replace('BEGIN:VEVENT', '\nBEGIN:VEVENT')
+
 # Remove all the unnecessary lines from academic_calendar
 academic_calendar = remove_line(academic_calendar, 'LAST-MODIFIED:')
 academic_calendar = remove_line(academic_calendar, 'PRIORITY:')
@@ -514,84 +516,96 @@ class_rows = 0
 # Used for iterative purposes (duh)
 i = 0
 
-# TODO: After renaming Meeting/Final classes, fix the following comment:
-# These lists are going to store all of the Meeting/Final objects that we'll use to make the calendar events later
-meetings = []
-finals = []
+# These lists are going to store all of the Recurring/OneTime objects that we'll use to make the calendar events later
+recurring_events = []
+one_time_events = []
 
 # This is the main loop that runs through the each row and picks out important information and makes the calendar
 # events. Basically the actual core of the program.
 while i < number_of_rows:
-    if aria_find('list-id-table_colsubj', i) != '':
-        # Rows non-empty cells with the tag aria-describedby='list-id-table_colsubj' contain the name of the class
-        # itself. For example, if I have a class 'MATH 31AH' with a lecture, discussion, and final, there will be three
-        # rows for each one of those events, but only the first row will actually say 'MATH 31AH', so we save that
-        # to 'current_class' since that is the class that we're currently dealing with.
-        current_class = aria_find('list-id-table_colsubj', i)
+    # This assumes the first row contains a class row, which it should.
+    # Note that current_class is a string and also the class code
+    current_class = aria_find('list-id-table_colsubj', i)
 
-        # If 'current_class' ends in a space, remove it
-        if current_class[len(current_class):] == ' ':
-            current_class = current_class[:len(current_class) - 1]
+    # If 'current_class' ends in a space, remove it
+    if current_class[len(current_class):] == ' ':
+        current_class = current_class[:len(current_class) - 1]
 
-        # This loop figures out up to which number row has to do with current_class and saves that number to class_rows
-        j = 1
-        while True:
-            if i + j < number_of_rows:
-                if aria_find('list-id-table_colsubj', i + j) == '':
-                    # If we found a non-blank colsubj cell in the row, then that's the next class, class_rows = all
-                    # the rows from i to the one before this row.
-                    class_rows = i + j
-                else:
-                    if j == 1:
-                        # If j = 1, then that means the current_class only has one row, so class_rows = i, break
-                        class_rows = i
-                    break
+    # This loop figures out up to which number row has to do with current_class and saves that number to class_rows
+    # Rows with non-empty cells with the tag aria-describedby='list-id-table_colsubj' contain the name of the class
+    # itself. For example, if I have a class 'MATH 31AH' with a lecture, discussion, and final, there will be three
+    # rows for each one of those events, but only the first row will actually say 'MATH 31AH'. We can use that fact
+    # to find out which rows belong to which class.
+    j = 1
+    while True:
+        if i + j < number_of_rows:
+            if aria_find('list-id-table_colsubj', i + j) == '':
+                # If we found a non-blank colsubj cell in the row, then that's the next class, class_rows = all
+                # the rows from i to the one before this row.
+                class_rows = i + j
             else:
-                # If we reached the last row, then we're done, we know that all remaining rows have to do with
-                # current_class.
-                class_rows = number_of_rows - 1
+                if j == 1:
+                    # If j = 1, then that means the current_class only has one row, so class_rows = i, break
+                    class_rows = i
                 break
+        else:
+            # If we reached the last row, then we're done, we know that all remaining rows have to do with
+            # current_class.
+            class_rows = number_of_rows - 1
+            break
+        j += 1
+
+    # This loop adds the event objects to recurring_events and one_time_events
+    j = i
+    while j <= class_rows:
+        if aria_find('list-id-table_FK_CDI_INSTR_TYPE', j) == '':
+            # Make sure that the selected row actually has a lecture type (i.e., lecture, final, discussion, etc.)
+            # If it doesn't have a lecture type, skip that row as it's not an event.
             j += 1
 
-        # TODO: Finish adding comments from this point onwards
+        # TODO: Either make sure all of these attributes are used somewhere or get rid of them
+        name = aria_find('list-id-table_CRSE_TITLE', i)  # The name of the event's class
 
-        j = i
-        while j <= class_rows:
-            if aria_find('list-id-table_FK_CDI_INSTR_TYPE', j) == '':
-                # Make sure that the selected row actually has a lecture type (i.e., lecture, final, discussion, etc.)
-                # If it doesn't have a lecture type, skip that row as it's not an event
-                j += 1
-            # TODO: Either make sure all of these attributes are used somewhere or get rid of them
-            name = aria_find('list-id-table_CRSE_TITLE', i)
-            prof = aria_find('list-id-table_PERSON_FULL_NAME', i)
-            type = rows[j].find('td', {'aria-describedby': 'list-id-table_FK_CDI_INSTR_TYPE'}).get('title')
-            sect = aria_find('list-id-table_SECT_CODE', j)
-            days = aria_find('list-id-table_DAY_CODE', j).replace('M', 'MO,').replace('Tu', 'TU,').replace('W', 'WE,')
-            days = days.replace('Th', 'TH,').replace('F', 'FR,').replace('Sa', 'SA,').replace('Su', 'SU,')
-            days = days[:len(days) - 1]
-            time = aria_find('list-id-table_coltime', j).replace('a', '').replace(':', '')
-            bldg = aria_find('list-id-table_BLDG_CODE', j)
-            room = aria_find('list-id-table_ROOM_CODE', j)
+        prof = aria_find('list-id-table_PERSON_FULL_NAME', i)  # The class professor
 
-            # TODO: Instead of adding object to finals based on class type, add it based on whether or not there is
-            #       a date in the object's 'days' attribute and not just a weekday(s).
-            if type == 'Final Exam':
-                days = aria_find('list-id-table_DAY_CODE', j)[2:].replace(' ', '')
-                finals.append(Final(current_class, name, prof, days, time, bldg, room, type))
-            elif type == 'Make-up Sessions':
-                days = aria_find('list-id-table_DAY_CODE', j)[2:].replace(' ', '')
-                finals.append(Final(current_class, name, prof, days, time, bldg, room, 'Make-Up Session'))
-            else:
-                meetings.append(Meeting(current_class, name, type, sect, prof, days, time, bldg, room))
-            j += 1
-    else:
-        exit()
+        # The event type (i.e., 'Lecture', 'Discussion', 'Final')
+        type = rows[j].find('td', {'aria-describedby': 'list-id-table_FK_CDI_INSTR_TYPE'}).get('title')
+
+        sect = aria_find('list-id-table_SECT_CODE', j)  # The event section
+
+        # The days of the week on which the class takes place or the date of the event if it's a OneTime object
+        days = aria_find('list-id-table_DAY_CODE', j).replace('M', 'MO,').replace('Tu', 'TU,').replace('W', 'WE,')
+        days = days.replace('Th', 'TH,').replace('F', 'FR,').replace('Sa', 'SA,').replace('Su', 'SU,')
+        days = days[:len(days) - 1]
+
+        # The time at which the event takes place
+        time = aria_find('list-id-table_coltime', j).replace('a', '').replace(':', '')
+
+        # The building in which the event takes place
+        bldg = aria_find('list-id-table_BLDG_CODE', j)
+
+        # The room in which the event takes place
+        room = aria_find('list-id-table_ROOM_CODE', j)
+
+        # If the event days attribute has a slash in it, it happens on a specific date, so it's a OneTime object
+        if '/' in days:
+            days = aria_find('list-id-table_DAY_CODE', j)[2:].replace(' ', '')  # Remove weekday from date
+            if type == 'Make-up Sessions':
+                # I don't like how 'Make-up Sessions' is plural when the event only happens once, so I fixed it.
+                type = 'Make-up Session'
+            # Add OneTime object to one_time_events
+            one_time_events.append(OneTime(current_class, name, prof, days, time, bldg, room, type))
+        else:
+            # Add Recurring object to recurring_events
+            recurring_events.append(Recurring(current_class, name, type, sect, prof, days, time, bldg, room))
+        j += 1
 
     i = class_rows + 1
 
 print('Creating \'Calendar.ics\'...')
 
-f3 = open('Calendar.ics', 'w+')
+# Now we create the actual Calendar.ics file, finally.
+f3 = open('Calendar.ics', 'w+')  # Open the file, create if it doesn't exist
 f3.write(
     'BEGIN:VCALENDAR\nPRODID:-//Google Inc//Google Calendar '
     '70.9054//EN\nVERSION:2.0\nCALSCALE:GREGORIAN\nMETHOD:PUBLISH\nX-WR-CALNAME:'
@@ -599,12 +613,16 @@ f3.write(
     '-LOCATION:America/Los_Angeles\nBEGIN:DAYLIGHT\nTZOFFSETFROM:-0800\nTZOFFSETTO:-0700\nTZNAME:PDT\nDTSTART'
     ':19700308T020000\nRRULE:FREQ=YEARLY;BYMONTH=3;BYDAY=2SU\nEND:DAYLIGHT\nBEGIN:STANDARD\nTZOFFSETFROM:-0700'
     '\nTZOFFSETTO:-0800\nTZNAME:PST\nDTSTART:19701101T020000\nRRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU\nEND:STANDARD'
-    '\nEND:VTIMEZONE\n')
+    '\nEND:VTIMEZONE\n')  # Basic initialization stuff about timezone, the type of calendar, etc.
 
-for i in meetings:
-    start = i.time[:i.time.find('-')]
-    end = i.time[i.time.find('-') + 1:]
+# This loop goes through every event object and adds a calendar event to the Calendar.ics file
+for i in recurring_events:
+    # Currently, each event's time attribute is a string which looks like '1100-300p', '830-1230p'. Notice there is no
+    # A.M. indicator, no colons, and no spaces. We need to get the start and end time each in the format HHMMSS
+    start = i.time[:i.time.find('-')]  # The start time is made up by the digits to the left of the dash
+    end = i.time[i.time.find('-') + 1:]  # The end time is made up by the digits to the right of the dash
 
+    # Formats start variable appropriately, I'm too lazy to explain each step
     if start.find('p') == -1:
         if len(start) == 3:
             start = '0' + start
@@ -617,7 +635,9 @@ for i in meetings:
             else:
                 start = str(int(start[0:2]) + 12) + ':' + start[2:]
         start = start.replace('p', '')
+    start = start + '00'
 
+    # Formats end variable appropriately, I'm too lazy to explain each step
     if end.find('p') == -1:
         if len(end) == 3:
             end = '0' + end
@@ -630,6 +650,7 @@ for i in meetings:
             else:
                 end = str(int(end[0:2]) + 12) + ':' + end[2:]
         end = end.replace('p', '')
+    end = end + '00'
 
     weekdays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
     new_weekdays = []
@@ -644,9 +665,9 @@ for i in meetings:
 
     f3.write('\nBEGIN:VEVENT\n')
     f3.write('DTSTART;TZID=America/Los_Angeles:' +
-             str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + start + '00\n')
+             str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + start + '\n')
     f3.write('DTEND;TZID=America/Los_Angeles:'
-             + str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + end + '00\n')
+             + str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + end + '\n')
 
     if i.bldg == 'RCLAS':
         f3.write('SUMMARY:' + i.code + ' ' + i.type + ' (ONLINE)' + '\n')
@@ -658,7 +679,7 @@ for i in meetings:
 
     for j in holidays:
         if weekdays[j.weekday()] in i.days:
-            f3.write('EXDATE;TZID=America/Los_Angeles:' + str(j).replace('-', '') + 'T' + start + '00\n')
+            f3.write('EXDATE;TZID=America/Los_Angeles:' + str(j).replace('-', '') + 'T' + start + '\n')
 
     if i.bldg == 'TBA':
         f3.write('LOCATION:TBA\n')
@@ -668,10 +689,12 @@ for i in meetings:
     f3.write('STATUS:CONFIRMED\n')
     f3.write('END:VEVENT\n')
 
-for i in finals:
+for i in one_time_events:
+    # See code block in previous for-loop
     start = i.time[:i.time.find('-')]
     end = i.time[i.time.find('-') + 1:]
 
+    # See code block in previous for-loop
     if start.find('p') == -1:
         if len(start) == 3:
             start = '0' + start
@@ -684,7 +707,9 @@ for i in finals:
             else:
                 start = str(int(start[0:2]) + 12) + ':' + start[2:]
         start = start.replace('p', '')
+    start = start + '00'
 
+    # See code block in previous for-loop
     if end.find('p') == -1:
         if len(end) == 3:
             end = '0' + end
@@ -697,10 +722,11 @@ for i in finals:
             else:
                 end = str(int(end[0:2]) + 12) + ':' + end[2:]
         end = end.replace('p', '')
+    end = end + '00'
 
     f3.write('\nBEGIN:VEVENT\n')
-    f3.write('DTSTART;TZID=America/Los_Angeles:' + str(year) + i.date[0:2] + i.date[3:5] + 'T' + start + '00\n')
-    f3.write('DTEND;TZID=America/Los_Angeles:' + str(year) + i.date[0:2] + i.date[3:5] + 'T' + end + '00\n')
+    f3.write('DTSTART;TZID=America/Los_Angeles:' + str(year) + i.date[0:2] + i.date[3:5] + 'T' + start + '\n')
+    f3.write('DTEND;TZID=America/Los_Angeles:' + str(year) + i.date[0:2] + i.date[3:5] + 'T' + end + '\n')
 
     if i.bldg == 'RCLAS' and i.type == 'Make-Up Session':
         f3.write('SUMMARY:' + i.code + ' ' + i.type + ' (ONLINE)' + '\n')
@@ -719,10 +745,10 @@ f3.write(academic_calendar)
 f3.close()
 
 print('------------------------------------------------------------------------')
-print(str(len(meetings) + len(finals)) + ' Unique Calendar Events Created:')
+print(str(len(recurring_events) + len(one_time_events)) + ' Unique Calendar Events Created:')
 print('------------------------------------------------------------------------')
-for i in meetings:
+for i in recurring_events:
     print('Recurring Event:........' + i.code + ' ' + i.type + ' on ' + i.days)
-for i in finals:
+for i in one_time_events:
     print('One-Time Event:.........' + i.code + ' ' + i.type + ' on ' + i.date[:6] + str(year))
 print('------------------------------------------------------------------------')
