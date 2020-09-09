@@ -87,13 +87,13 @@ if choice == '1':
     censored_password = '*' * len(password)
 
     clear()
-    print('''------------------------------------------------------------------------
-             Extracting from WebReg:
-             ------------------------------------------------------------------------
-             ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD'S WEBSITE
-             ------------------------------------------------------------------------
-             What is your UCSD username: ''' + user + '''
-             What is your password: ''' + censored_password)
+    print('------------------------------------------------------------------------\n'
+          'Extracting from WebReg:\n'
+          '------------------------------------------------------------------------\n'
+          'ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD\'S WEBSITE\n'
+          '------------------------------------------------------------------------\n'
+          'What is your UCSD username: ' + user + '\n' +
+          'What is your password: ' + censored_password)
 
     print('------------------------------------------------------------------------')
     print('Starting webdriver, be patient, this process may take long...')
