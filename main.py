@@ -22,7 +22,6 @@ def clear():
 
 
 # TODO: Decide if this should be moved to another module or not
-# TODO: Replace 'rows[index]' and 'index' function option with a non-program specific function input variable
 # The information in the table created by WebReg identifies all of its information by the 'aria-describedby' tag,
 # this function returns the text of the element with the desired identifier and cleans it up, so to speak.
 def aria_find(desc, element):
@@ -44,13 +43,13 @@ def remove_line(text, line_start) -> str:
 
 
 # TODO: Decide if this should be moved to another module or not
-# TODO: Decide if this should be moved to another module or not
+# TODO: Remove/rename any __init__ parameters that are either unused or shadowed by outer scope
 # This class is used to store the identifying information for any recurring event
 class Recurring:
-    def __init__(self, code, name, type, sect, prof, days, time, bldg, room):
+    def __init__(self, code, name, _type, sect, prof, days, time, bldg, room):
         self.code = code
         self.name = name
-        self.type = type
+        self.type = _type
         self.sect = sect
         self.prof = prof
         self.days = days
