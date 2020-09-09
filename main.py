@@ -1,9 +1,10 @@
 # This is literally the definition of spaghetti code. But it works! Good luck trying to follow it
-
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
-from selenium.common.exceptions import NoSuchElementException
+from selenium.common.exceptions import NoSuchElementException, \
+    ElementNotInteractableException, \
+    StaleElementReferenceException
 from selenium.webdriver.support.ui import Select
 from bs4 import BeautifulSoup
 import datetime
@@ -12,6 +13,7 @@ import os
 import requests
 
 
+# Defines a function to clear the console based on the OS being used
 def clear():
     if os.name == 'nt':
         _ = os.system('cls')
@@ -19,22 +21,32 @@ def clear():
         _ = os.system('clear')
 
 
+# TODO: Decide if this should be moved to another module or not
+# TODO: Replace 'rows[index]' and 'index' function option with a non-program specific function input variable
+# The information in the table created by WebReg identifies all of its information by the 'aria-describedby' tag,
+# this function returns the text of the element with the desired identifier and cleans it up, so to speak.
 def aria_find(desc, index):
     return rows[index].find('td', {'aria-describedby': desc}).text.replace(
-           '    ', ' ').replace('   ', ' ').replace('  ', ' ').strip()
+        '    ', ' ').replace('   ', ' ').replace('  ', ' ').strip()
 
 
+# TODO: Decide if this should be moved to another module or not
+# This function, given a multi-line string, removes all lines that start with the selected substring.
 def remove_line(text, line_start) -> str:
-    i = text.find(line_start)
+    k = text.find(line_start)
     while True:
-        if i != -1:
-            text = text[:i - 1] + text[text.find('\n', i):]
-            i = text.find(line_start, i)
+        if k != -1:
+            text = text[:k - 1] + text[text.find('\n', k):]
+            k = text.find(line_start, k)
         else:
             break
     return text
 
 
+# TODO: Decide if this should be moved to another module or not
+# TODO: Decide if this should be moved to another module or not
+# TODO: Rename Meeting class to 'Recurring'
+# This class is used to store the identifying information for any recurring event
 class Meeting:
     def __init__(self, code, name, type, sect, prof, days, time, bldg, room):
         self.code = code
@@ -48,6 +60,10 @@ class Meeting:
         self.room = room
 
 
+# TODO: Decide if this should be moved to another module or not
+# TODO: Rename Final class to 'OneTime'
+# TODO: Remove/rename any __init__ parameters that are either unused or shadowed by outer scope
+# This class is used to store the identifying information for any one-time event
 class Final:
     def __init__(self, code, name, prof, date, time, bldg, room, type):
         self.code = code
@@ -60,32 +76,26 @@ class Final:
         self.type = type
 
 
-current_class = ''
-class_rows = 0
-meetings = []
-finals = []
-i = 0
-
+# TODO: Decide if there should be a separate module for the actual gathering of information, for clarity's sake
+# Asks the user if they want to get the information from a file or from a website
 clear()
 choice = input('Would you like to extract the information from:\n[1] The WebReg website\n[2] A file\n')
 clear()
+
 print('------------------------------------------------------------------------')
 
-if choice == '1':
+if choice == '1':  # If the user decides to extract the schedule information from WebReg:
     print('Extracting from WebReg: ')
     print('------------------------------------------------------------------------')
-
-    options = Options()
-    options.headless = True
-
     print('ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD\'S WEBSITE')
     print('------------------------------------------------------------------------')
 
+    # TODO: Find a way to not show the password as the user is typing it, instead show dots or asterisks
+    # Asks the user for their UCSD username and password
     user = input('What is your UCSD username: ')
     password = input('What is your password: ')
 
-    censored_password = '*' * len(password)
-
+    # 'Censors' the password, so to speak.
     clear()
     print('------------------------------------------------------------------------\n'
           'Extracting from WebReg:\n'
@@ -93,15 +103,23 @@ if choice == '1':
           'ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD\'S WEBSITE\n'
           '------------------------------------------------------------------------\n'
           'What is your UCSD username: ' + user + '\n' +
-          'What is your password: ' + censored_password)
+          'What is your password: ' + '*' * len(password))
 
     print('------------------------------------------------------------------------')
     print('Starting webdriver, be patient, this process may take long...')
 
+    # Initializes the scraper as headless
+    options = Options()
+    options.headless = True
+
+    # Initialize the webdriver using Firefox and the earlier outlined options
     driver = webdriver.Firefox(options=options)
 
+    # Navigates to WebReg
     print('Connecting to WebReg...')
     driver.get('https://act.ucsd.edu/webreg2/start')
+
+    # Enters the username and password in their respective fields
     print('Entering username and password...')
     elem = driver.find_element_by_name('urn:mace:ucsd.edu:sso:username')
     elem.clear()
@@ -110,129 +128,176 @@ if choice == '1':
     elem.clear()
     elem.send_keys(password)
     elem.send_keys(Keys.RETURN)
-    print('Verifying...')
 
+    # This loop checks to see if the next page has loaded or if the password and username are incorrect.
+    print('Verifying...')
     while True:
         try:
-            assert 'UCSD SSO' in driver.title
+            assert 'UCSD SSO' in driver.title  # Check if we've reached the authentication page
             print('Sign-in Successful.')
             print('Waiting for page to load...')
-            break
-        except AssertionError:
+            break  # If it is there, then break the loop, continue on
+        except AssertionError:  # If 'UCSD SSO' is not in the title, check to see if the password is wrong
             try:
-                driver.find_element_by_id('_login_error_message')
+                driver.find_element_by_id('_login_error_message')  # Look for an error message
                 print('Password and username incorrect.\nExiting...')
-                sys.exit()
+                driver.close()
+                sys.exit()  # If the error message is found exit the program
             except NoSuchElementException:
+                # If there is no error message found then check if we've reached the authentication page again
+                # Rinse and repeat
                 pass
 
+    # This loop looks for the button that sends a 2FA push to Duo, clicks it, and then makes sure that the request
+    # actually went through.
     while True:
         try:
-            driver.find_element_by_xpath('/html/body/div/div/div[1]/div/form/div[1]/fieldset/div[1]/button')
+            driver.switch_to.default_content()  # Switch scope back to the main page
+            driver.switch_to.frame(driver.find_element_by_id('duo_iframe'))  # Switch to Duo iframe where the button is
+            driver.find_element_by_css_selector('button.auth-button.positive').click()  # Click the auth button
+            # Look for the 'cancel request' button, which only comes up when the 2FA request button has been clicked
+            driver.find_element_by_css_selector('button.btn-cancel')
             break
-        except NoSuchElementException:
-            while True:
-                try:
-                    driver.switch_to.default_content()
-                    iframes = driver.find_element_by_id('duo_iframe')
-                    driver.switch_to.frame(iframes)
-                    break
-                except Exception as e:
-                    pass
+        except (ElementNotInteractableException, NoSuchElementException):
+            pass  # If any of the above steps fail, run through the whole thing repeatedly until it works
+
+    # This loop checks to make sure that the 2FA request was successfully sent
+    while True:
+        try:
+            # Check to make sure that the 2FA request was sent
+            if 'Pushed a login request' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
+                print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+                break
+            else:  # If a message is given saying that something other than the request was sent, exit
+                sys.exit()
+        except SystemExit:
+            print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text + '\nExiting...')
+            driver.close()
+            sys.exit()
+        except NoSuchElementException:  # If no message has come up, assume it's still loading and try again
             pass
 
+    # This loop checks to see if the 2FA request was confirmed or not
     while True:
         try:
-            driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/button')
-            break
-        except Exception as e:
-            try:
-                driver.find_element_by_xpath('/html/body/div/div/div[1]/div/form/div[1]/fieldset/div[1]/button').click()
-            except Exception as e:
-                pass
-        pass
-
-    while True:
-        try:
-            print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
-            break
-        except Exception as e:
-            pass
-
-    while True:
-        try:
+            # If we get a success message, continue on!
             if 'Success' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
                 print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
                 break
+            # If the message still says 'Pushed a login request...' then we're still waiting on the user, try again
+            elif 'Pushed a login request' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
+                pass
+            # If the message is cleared, it's in the process of being changed, keep checking for success
+            elif driver.find_element_by_xpath('//span[@class=\'message-text\']').text == '':
+                pass
+            # If none of the above work, check to see if the element exists at all, if so, it's an error
             else:
-                raise SystemError
-        except Exception as e:
+                try:
+                    # TODO: Remove this next print statement after figuring out this weird section
+                    print('WHAT')
+                    driver.find_element_by_xpath('//span[@class=\'message-text\']')  # Try finding the element
+                except (StaleElementReferenceException, NoSuchElementException):
+                    raise StaleElementReferenceException  # If it isn't found, try again
+                print('Error: ' + driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+                driver.close()
+                sys.exit()
+        # If there is no message, it's in the process of being changed, keep checking for success
+        except StaleElementReferenceException:
             pass
+        except SystemExit:
+            sys.exit()
 
+    # This loop looks for the dropdown on WebReg which has list of available quarters that we can pull a schedule from
     while True:
         try:
-            driver.switch_to.default_content()
+            driver.switch_to.default_content()  # Make sure we're out of the Duo iframe
+            # If we find the dropdown, continue on!
             if driver.find_element_by_id('startpage-select-term').text != '':
                 break
-        except Exception as e:
+        # If the dropdown isn't found, it's still loading, try again
+        except NoSuchElementException:
             pass
 
-    select = driver.find_element_by_id('startpage-select-term')
-
+    # Initialize array that stores the quarter options available in the dropdown
     dropdown_options = []
 
-    for i in select.find_elements_by_tag_name('option'):
+    # Now we need to actually get all of the quarter options available, but only if they're fall, winter, spring, or a
+    # regular summer session.
+    for i in driver.find_element_by_id('startpage-select-term').find_elements_by_tag_name('option'):
+        # More exclusions might need to be added beyond med school and special sessions
         if 'med' not in (i.text.lower()) and 'special' not in (i.text.lower()):
             dropdown_options.append(i)
 
-    select = Select(select)
+    # We use Selenium's select class to actually be able to select the user's desired option before continuing to the
+    # schedule.
+    select = Select(driver.find_element_by_id('startpage-select-term'))
 
+    # Display the dropdown options to the user
     print('------------------------------------------------------------------------')
     print('Select desired quarter:')
     for i in range(len(dropdown_options)):
         print('[' + str(i + 1) + '] ' + dropdown_options[i].text)
 
+    # If the user's input cannot be converted to an integer or is not a valid dropdown index, exit
     try:
-        option = int(input('').replace(' ', '')) - 1
-    except Exception as e:
+        user_selection = dropdown_options[int(input('').replace(' ', '')) - 1]
+    except ValueError:
         print('Invalid input.\nExiting...')
+        driver.close()
+        sys.exit()
+
+    select.select_by_visible_text(user_selection.text)  # Select the user's desired option
+
+    # Cleans up the input by getting rid of extra words and spaces among other things
+    user_selection = user_selection.text.lower().replace('quarter', '').replace('session', '')
+    user_selection = user_selection.replace(' i ', ' 1 ').replace(' ii ', ' 2 ').replace(' ', '')
+
+    # Get the year and quarter from the dropdown choice the user chose earlier.
+    # The last four digits are the year, the rest is the quarter.
+    try:
+        year = int(user_selection[len(user_selection) - 4:])
+        quarter = user_selection[:len(user_selection) - 4]
+    except ValueError:
+        # If somehow the last four digits aren't all numbers, the dropdown option the user selected is either not
+        # supported or was changed in a way that I didn't anticipate.
+        print('That is not a valid option.\nExiting...')
         sys.exit()
 
     print('------------------------------------------------------------------------')
     print('Waiting for page to load...')
 
-    selection = dropdown_options[option].text.lower().replace('quarter', '').replace('session', '')
-    selection = selection.replace(' i ', ' 1 ').replace(' ii ', ' 2 ').replace(' ', '')
-    select.select_by_visible_text(dropdown_options[option].text)
-
+    # This loop clicks "go", gathers the page source, and checks for any error message
     while True:
         try:
-            driver.find_element_by_id('list-id-table')
+            driver.find_element_by_id('list-id-table')  # Look for the table schedule
             print('Gathering data...')
+            # If the table schedule is found, save the page source as 'input_source' and close the webdriver
+            # We are going to use BeautifulSoup for the rest as I like it better than Selenium
             input_source = BeautifulSoup(driver.page_source, 'html.parser')
             print('Closing webdriver...')
             driver.close()
             break
-        except Exception as e:
-            while True:
-                try:
-                    if driver.find_element_by_id('startpage-msgs').text != '':
-                        print(driver.find_element_by_id('startpage-msgs').text.replace('\n', ' '))
-                        sys.exit()
-                    driver.switch_to.default_content()
-                    driver.find_element_by_id('startpage-button-go').click()
-                    break
-                except Exception as e:
-                    pass
+        except NoSuchElementException:
+            # If we can't find the table (which we won't the first time as we haven't clicked go yet), then find and
+            # click go after checking there are no error messages (which there will not be the first time).
+            try:
+                if driver.find_element_by_id('startpage-msgs').text != '':
+                    # Look for non-blank error message, if found, print the error message to the user and exit
+                    print(driver.find_element_by_id('startpage-msgs').text.replace('\n', ' '))
+                    driver.close()
+                    sys.exit()
+                # Click the 'go' button if there's no error message
+                driver.switch_to.default_content()
+                driver.find_element_by_id('startpage-button-go').click()
+            except (ElementNotInteractableException, NoSuchElementException):
+                # If we can't click or can't find the go button or the error message element, the page is still
+                # loading, try again.
+                pass
+            except SystemExit:  # Exit if we find a non-blank error message
+                sys.exit()
             pass
 
-    try:
-        year = int(selection[len(selection) - 4:])
-        quarter = selection[:len(selection) - 4]
-    except Exception as e:
-        print('That is not a valid option.\nExiting...')
-        sys.exit()
-
+    # It should be obvious what this bit does, we need the quarters as integers for later logic
     if quarter == 'fall':
         quarter = 1
     elif quarter == 'winter':
@@ -248,45 +313,64 @@ if choice == '1':
         sys.exit()
 
 
-elif choice == '2':
+elif choice == '2':  # If the user decides to extract the schedule information from a file:
     print('Extracting from a file:')
     print('------------------------------------------------------------------------')
-    print('Go to https://act.ucsd.edu/webreg2/main?p1=FA20&p2=UN#tabs-0, make sure')
-    print('your schedule is shown on the page. Right click, \'Save Page As\', and')
-    print('save the file.')
+    print('Go to https://act.ucsd.edu/webreg2/start, sign in, make sure your')
+    print('schedule is shown on the page. Right click, \'Save Page As\', and save')
+    print('the file.')
     print('------------------------------------------------------------------------')
     filename = input('Please type the path to the file location:\n')
 
+    # If the user doesn't specify a filename, resort to the example_input.html file provided
     if filename == '':
         filename = 'example_input'
 
-    if '.htm' not in filename:
+    # If the user doesn't specify a file extension, add '.html' to the end of the filename
+    if '.' not in filename:
         filename = filename + '.html'
 
     print('------------------------------------------------------------------------')
 
+    # We need to manually ask the user for the quarter and year of their schedule
     try:
         quarter = int(input('What quarter is the selected schedule from?\n[1] Fall\n[2] Winter\n[3] Spring\n[4] '
                             'Summer Session 1\n[5] Summer Session 2\n'))
+        if quarter - 1 not in range(5):
+            raise ValueError
         print('------------------------------------------------------------------------')
         year = int(input('What year is the selected schedule from?\n'))
         print('------------------------------------------------------------------------')
-    except Exception as e:
+    except ValueError:  # If the input is not an integer 1-5, then exit
         print('Invalid input.\nExiting...')
         sys.exit()
 
-    f1 = open(filename, 'r')
-    input_source = BeautifulSoup(f1.read(), 'html.parser')
-    f1.close()
+    # Grab the source from the file
+    # We are going to use BeautifulSoup for the rest as I like it better than Selenium
+    try:
+        f1 = open(filename, 'r')  # Open the file provided by the user
+        input_source = BeautifulSoup(f1.read(), 'html.parser')  # Create a BeautifulSoup html object from the file
+        f1.close()  # Close the file
+    except FileNotFoundError:  # If an invalid file is given, then exit
+        print('File not found.\nExiting...')
+        sys.exit()
 
-
-else:
+else:  # If the user doesn't input 1 or 2 (WebReg or file), then exit
     print('Invalid input.\nExiting...')
     sys.exit()
 
+# Next we need to download the academic calendar from UCSD's official website in order to get important dates from it.
+# UCSD typically has them available for download at https://blink.ucsd.edu/_files/SCI-tab/<years>-academic-calendar.ics.
+# <years> is the school year range, i.e., 2020-2021.
 if quarter == 1:
+    # If the selected quarter is fall, it's at the beginning of the school year, so we want the calendar that starts
+    # with the selected year. For example, to see start and end dates of the Fall 2020 quarter, we want the 2020-2021
+    # calendar, not the 2019-2020 calendar.
     years = str(year) + '-' + str(int(year + 1))
 elif quarter == 2:
+    # If the selected quarter is *not* fall, it's at the end of the school year, so we want the calendar that starts
+    # the year *before* the selected year. For example, to see start and end dates of the Winter 2021 quarter, we want
+    # the 2020-2021 calendar, not the 2021-2022 calendar.
     years = str(int(year - 1)) + '-' + str(year)
 elif quarter == 3:
     years = str(int(year - 1)) + '-' + str(year)
@@ -294,30 +378,31 @@ elif quarter == 4:
     years = str(int(year - 1)) + '-' + str(year)
 elif quarter == 5:
     years = str(int(year - 1)) + '-' + str(year)
-else:
+else:  # If somehow 'quarter' is not an integer 1-5, then exit, although I believe that the script would exit sooner.
     print('Invalid input.\nExiting...')
     sys.exit()
 
+# Gets the chosen academic calendar and saves it to a file
 print('Downloading UCSD ' + years + ' Academic Calendar')
 r = requests.get('https://blink.ucsd.edu/_files/SCI-tab/' + years + '-academic-calendar.ics')
-
 with open(years + '-academic-calendar.ics', 'wb+') as f2:
     f2.write(r.content)
 
+# Opens the file just downloaded and stores its contents as a string to academic_calendar variable
+# There's probably a better way to do this then saving the academic calendar file, reading from the file, and then
+# deleting the file, but I have yet to figure it out on my own and I'm too lazy to look it up.
 f2 = open(str(years) + '-academic-calendar.ics', 'r')
 academic_calendar = f2.read()
 f2.close()
+os.remove(years + '-academic-calendar.ics')
 
+# If the selected calendar file does not exist, instead of getting an .ics file we'll get an html file of UCSD's
+# website saying "this page does not exist". In that case, the user chose a year for which a calendar doesn't exist.
 if '<!DOCTYPE html>' in academic_calendar:
     print('Too far in the future or too far in the past.\nExiting...')
     sys.exit()
 
-academic_calendar = academic_calendar[academic_calendar.find('BEGIN:VEVENT'):].replace('BEGIN:VEVENT', '\nBEGIN:VEVENT')
-
-input_source = input_source.find('table', id='list-id-table')
-number_of_rows = len(input_source.find_all('tr', role='row', tabindex='-1'))
-rows = input_source.find_all('tr', role='row', tabindex='-1')
-
+# Remove all the unnecessary lines from academic_calendar
 academic_calendar = remove_line(academic_calendar, 'LAST-MODIFIED:')
 academic_calendar = remove_line(academic_calendar, 'PRIORITY:')
 academic_calendar = remove_line(academic_calendar, 'SEQUENCE:')
@@ -328,105 +413,157 @@ academic_calendar = remove_line(academic_calendar, 'X-MS-OLK-AUTOFILLLOCATION:')
 academic_calendar = remove_line(academic_calendar, 'TRANSP:')
 academic_calendar = remove_line(academic_calendar, 'DTSTAMP:')
 
-quarter_starts = []
-quarter_ends = []
-all_holidays = []
+# TODO: Reassess the location of any initialization variables
+# Initialize some variables for later
 
+quarter_starts = None
+quarter_ends = None
+holidays = []
+
+# This loop looks for any event in academic_calendar that has 'begin' and 'struction' (from 'instruction') in it, finds
+# the date of that event, checks to make sure that it is the same number event as quarter. To explain what that means,
+# if quarter = 4, meaning Summer Session I, then we want the 4th event that includes 'begin' and 'struction' in
+# academic calendar.
+# This loop assumes that the events in the .ics file are in order, which they always have been and should always be.
 i = academic_calendar.find('SUMMARY:')
+j = 1
 while True:
     if i != -1:
         if ('begin' in academic_calendar[i + 8:academic_calendar.find('\n', i)]) \
                 and ('struction' in academic_calendar[i + 8:academic_calendar.find('\n', i)]):
-            quarter_starts.append(datetime.date(int(academic_calendar[i - 9:i - 5]),
-                                                int(academic_calendar[i - 5:i - 3]),
-                                                int(academic_calendar[i - 3:i - 1])))
+            # If 'begin', 'struction', both in the selected event summary, check to make sure it's start date of the
+            # selected quarter
+            if j == quarter:
+                # If we found the desired quarter start date, save it, leave the loop and continue on
+                quarter_starts = datetime.date(int(academic_calendar[i - 9:i - 5]),  # year
+                                               int(academic_calendar[i - 5:i - 3]),  # month
+                                               int(academic_calendar[i - 3:i - 1]))  # day
+                break
+            j += 1
         i = academic_calendar.find('SUMMARY:', i + 8)
     else:
+        # If i == -1 then there are no more lines that start with "SUMMARY:", meaning, we've reached the end, break.
         break
 
+# Does the same as the above loop but looks for 'end' instead of 'begin' and saves to quarter_ends
 i = academic_calendar.find('SUMMARY:')
+j = 1
 while True:
     if i != -1:
         if ('end' in academic_calendar[i + 8:academic_calendar.find('\n', i)]) \
                 and ('struction' in academic_calendar[i + 8:academic_calendar.find('\n', i)]):
-            quarter_ends.append(datetime.date(int(academic_calendar[i - 9:i - 5]),
-                                              int(academic_calendar[i - 5:i - 3]),
-                                              int(academic_calendar[i - 3:i - 1])))
+            if j == quarter:
+                quarter_ends = datetime.date(int(academic_calendar[i - 9:i - 5]),  # year
+                                             int(academic_calendar[i - 5:i - 3]),  # month
+                                             int(academic_calendar[i - 3:i - 1]))  # day
+                break
+            j += 1
         i = academic_calendar.find('SUMMARY:', i + 8)
     else:
         break
 
-
-for i in range(len(quarter_starts)):
-    if i + 1 == quarter:
-        quarter_starts = quarter_starts[i]
-        quarter_ends = quarter_ends[i]
-        break
-
-
+# Looks for any event with 'day' in the summary, checks to see if said event is within the quarter start-end date
+# range, and adds a datetime.date object to holidays. I checked all the calendars can see, without fail, as far as I
+# could tell, any event with the word 'day' in it was a holiday.
 i = academic_calendar.find('SUMMARY:')
 while True:
     if i != -1:
         if 'day' in academic_calendar[i + 8:academic_calendar.find('\n', i)].lower():
-            all_holidays.append(datetime.date(int(academic_calendar[i - 9:i - 5]),
-                                              int(academic_calendar[i - 5:i - 3]),
-                                              int(academic_calendar[i - 3:i - 1])))
-
-            holiday_start_date = datetime.date(int(academic_calendar[i - 9:i - 5]),
-                                               int(academic_calendar[i - 5:i - 3]),
-                                               int(academic_calendar[i - 3:i - 1]))
-            holiday_end_date = datetime.date(int(academic_calendar[i - 37:i - 33]),
-                                             int(academic_calendar[i - 33:i - 31]),
-                                             int(academic_calendar[i - 31:i - 29]))
-            if (holiday_end_date - holiday_start_date).days > 1:
-                for j in range((holiday_end_date - holiday_start_date).days - 1):
-                    all_holidays.append(holiday_start_date + datetime.timedelta(days=j + 1))
+            # If we find 'day' in the event summary, then check to make sure that said day is actually in the quarter
+            # of interest.
+            holiday_start_date = datetime.date(int(academic_calendar[i - 9:i - 5]),  # year
+                                               int(academic_calendar[i - 5:i - 3]),  # month
+                                               int(academic_calendar[i - 3:i - 1]))  # day
+            holiday_end_date = datetime.date(int(academic_calendar[i - 37:i - 33]),  # year
+                                             int(academic_calendar[i - 33:i - 31]),  # month
+                                             int(academic_calendar[i - 31:i - 29]))  # day
+            for j in range((holiday_end_date - holiday_start_date).days):
+                # For multi-day holidays, we need to add an individual holiday date object for every day within that
+                # holiday.
+                if quarter_starts <= holiday_start_date + datetime.timedelta(days=j) <= quarter_ends:
+                    # If the holiday resides within the quarter of interest, add it to holidays list
+                    holidays.append(holiday_start_date + datetime.timedelta(days=j))
         i = academic_calendar.find('SUMMARY:', i + 8)
     else:
+        # If i == -1 then there are no more lines that start with "SUMMARY:", meaning, we've reached the end, break.
         break
-
-holidays = []
-for i in all_holidays:
-    if quarter_starts <= i <= quarter_ends:
-        holidays.append(i)
-
-i = 0
 
 print('Parsing data...')
 
-while True:
-    if i >= number_of_rows:
-        break
+# Initializing some variables used for later:
+# Narrows down the html input to just the table of interest
+input_source = input_source.find('table', id='list-id-table')
 
+# Stores the number of rows in the table
+number_of_rows = len(input_source.find_all('tr', role='row', tabindex='-1'))
+
+# This creates a list of every row element
+rows = input_source.find_all('tr', role='row', tabindex='-1')
+
+# The table has multiple meetings per class, each on its own row. This variable stores the 'current class' that we're
+# dealing with. For example, your Math class may have three rows in the table: one for lectures, one for discussions,
+# and one for the class final. As the script iterates through the rows, it needs to know which class said row actually
+# belongs to.
+current_class = ''
+
+# This stores which rows of the table have to do with the current class. For example, if the loop is looking at row 0
+# (meaning, i = 0) and class_rows = 3, then we know that rows 0-3 are all for the same class. After looking over how
+# the main parsing loop works, the use of this variable should become more clear.
+class_rows = 0
+
+# Used for iterative purposes (duh)
+i = 0
+
+# TODO: After renaming Meeting/Final classes, fix the following comment:
+# These lists are going to store all of the Meeting/Final objects that we'll use to make the calendar events later
+meetings = []
+finals = []
+
+# This is the main loop that runs through the each row and picks out important information and makes the calendar
+# events. Basically the actual core of the program.
+while i < number_of_rows:
     if aria_find('list-id-table_colsubj', i) != '':
-
+        # Rows non-empty cells with the tag aria-describedby='list-id-table_colsubj' contain the name of the class
+        # itself. For example, if I have a class 'MATH 31AH' with a lecture, discussion, and final, there will be three
+        # rows for each one of those events, but only the first row will actually say 'MATH 31AH', so we save that
+        # to 'current_class' since that is the class that we're currently dealing with.
         current_class = aria_find('list-id-table_colsubj', i)
 
+        # If 'current_class' ends in a space, remove it
         if current_class[len(current_class):] == ' ':
             current_class = current_class[:len(current_class) - 1]
 
-        name = aria_find('list-id-table_CRSE_TITLE', i)
-        prof = aria_find('list-id-table_PERSON_FULL_NAME', i)
-
+        # This loop figures out up to which number row has to do with current_class and saves that number to class_rows
         j = 1
         while True:
             if i + j < number_of_rows:
                 if aria_find('list-id-table_colsubj', i + j) == '':
+                    # If we found a non-blank colsubj cell in the row, then that's the next class, class_rows = all
+                    # the rows from i to the one before this row.
                     class_rows = i + j
                 else:
                     if j == 1:
+                        # If j = 1, then that means the current_class only has one row, so class_rows = i, break
                         class_rows = i
                     break
             else:
+                # If we reached the last row, then we're done, we know that all remaining rows have to do with
+                # current_class.
                 class_rows = number_of_rows - 1
                 break
             j += 1
 
+        # TODO: Finish adding comments from this point onwards
+
         j = i
         while j <= class_rows:
             if aria_find('list-id-table_FK_CDI_INSTR_TYPE', j) == '':
+                # Make sure that the selected row actually has a lecture type (i.e., lecture, final, discussion, etc.)
+                # If it doesn't have a lecture type, skip that row as it's not an event
                 j += 1
-
+            # TODO: Either make sure all of these attributes are used somewhere or get rid of them
+            name = aria_find('list-id-table_CRSE_TITLE', i)
+            prof = aria_find('list-id-table_PERSON_FULL_NAME', i)
             type = rows[j].find('td', {'aria-describedby': 'list-id-table_FK_CDI_INSTR_TYPE'}).get('title')
             sect = aria_find('list-id-table_SECT_CODE', j)
             days = aria_find('list-id-table_DAY_CODE', j).replace('M', 'MO,').replace('Tu', 'TU,').replace('W', 'WE,')
@@ -436,6 +573,8 @@ while True:
             bldg = aria_find('list-id-table_BLDG_CODE', j)
             room = aria_find('list-id-table_ROOM_CODE', j)
 
+            # TODO: Instead of adding object to finals based on class type, add it based on whether or not there is
+            #       a date in the object's 'days' attribute and not just a weekday(s).
             if type == 'Final Exam':
                 days = aria_find('list-id-table_DAY_CODE', j)[2:].replace(' ', '')
                 finals.append(Final(current_class, name, prof, days, time, bldg, room, type))
@@ -579,8 +718,6 @@ for i in finals:
 f3.write(academic_calendar)
 f3.close()
 
-os.remove(years+'-academic-calendar.ics')
-
 print('------------------------------------------------------------------------')
 print(str(len(meetings) + len(finals)) + ' Unique Calendar Events Created:')
 print('------------------------------------------------------------------------')
@@ -589,4 +726,3 @@ for i in meetings:
 for i in finals:
     print('One-Time Event:.........' + i.code + ' ' + i.type + ' on ' + i.date[:6] + str(year))
 print('------------------------------------------------------------------------')
-input('Finished, press return to close.')
