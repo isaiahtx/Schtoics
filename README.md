@@ -1,5 +1,7 @@
 # Schtoics
-Pronounced "Skuh-tow-icks", Schtoics is a tool that converts a UCSD WebReg schedule and the official UCSD Academic Calendar to a .ICS file that can be used in Google Calendar
+Pronounced "Skuh-tow-icks", Schtoics is a tool that converts a UCSD WebReg schedule and the official UCSD Academic Calendar to a .ICS file that can be used in Google Calendar.
+
+This script *should* work indefinitely, provided UCSD does not change WebReg or the [academic calendar page](https://blink.ucsd.edu/instructors/resources/academic/calendars/2020.html) in any major ways.
 
 
 # Installation
@@ -13,9 +15,6 @@ To run, download and run the `main.py` script with python: `python main.py`. The
 **If you are providing the script with an html file, it might not accept the file unless it is located in the same directory as the script itself.**
 
 When the script is finished, the completed Calendar.ics file will be placed in the same directory as the script.
-
-Provided UCSD's website does not change, it should work indefinitely.
-
 
 # Adding to Google Calendar
 * Go to [calendar.google.com](https://calendar.google.com/)
