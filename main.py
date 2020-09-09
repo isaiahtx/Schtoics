@@ -515,7 +515,7 @@ for i in meetings:
         f3.write('SUMMARY:' + i.code + ' ' + i.type + '\n')
 
     f3.write('RRULE:FREQ=WEEKLY;WKST=SU;UNTIL='
-             + str(quarter_ends + datetime.timedeslta(days=1)).replace('-', '') + 'T000000Z;BYDAY=' + i.days + '\n')
+             + str(quarter_ends + datetime.timedelta(days=1)).replace('-', '') + 'T000000Z;BYDAY=' + i.days + '\n')
 
     for j in holidays:
         if weekdays[j.weekday()] in i.days:
