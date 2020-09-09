@@ -22,11 +22,10 @@ def clear():
 
 
 # TODO: Decide if this should be moved to another module or not
-# TODO: Replace 'rows[index]' and 'index' function option with a non-program specific function input variable
 # The information in the table created by WebReg identifies all of its information by the 'aria-describedby' tag,
 # this function returns the text of the element with the desired identifier and cleans it up, so to speak.
-def aria_find(desc, index):
-    return rows[index].find('td', {'aria-describedby': desc}).text.replace(
+def aria_find(desc, element):
+    return element.find('td', {'aria-describedby': desc}).text.replace(
         '    ', ' ').replace('   ', ' ').replace('  ', ' ').strip()
 
 
@@ -44,13 +43,13 @@ def remove_line(text, line_start) -> str:
 
 
 # TODO: Decide if this should be moved to another module or not
-# TODO: Decide if this should be moved to another module or not
+# TODO: Remove/rename any __init__ parameters that are either unused or shadowed by outer scope
 # This class is used to store the identifying information for any recurring event
 class Recurring:
-    def __init__(self, code, name, type, sect, prof, days, time, bldg, room):
+    def __init__(self, code, name, _type, sect, prof, days, time, bldg, room):
         self.code = code
         self.name = name
-        self.type = type
+        self.type = _type
         self.sect = sect
         self.prof = prof
         self.days = days
@@ -185,22 +184,16 @@ if choice == '1':  # If the user decides to extract the schedule information fro
             # If the message still says 'Pushed a login request...' then we're still waiting on the user, try again
             elif 'Pushed a login request' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
                 pass
-            # If the message is cleared, it's in the process of being changed, keep checking for success
-            elif driver.find_element_by_xpath('//span[@class=\'message-text\']').text == '':
-                pass
-            # If none of the above work, check to see if the element exists at all, if so, it's an error
-            else:
-                try:
-                    # TODO: Remove this next print statement after figuring out this weird section
-                    print('WHAT')
-                    driver.find_element_by_xpath('//span[@class=\'message-text\']')  # Try finding the element
-                except (StaleElementReferenceException, NoSuchElementException):
-                    raise StaleElementReferenceException  # If it isn't found, try again
+            # If the message says it's denied, exit
+            elif 'denied' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
                 print('Error: ' + driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
                 driver.close()
                 sys.exit()
+            # If none of the above work, it's still loading or being changed, try again
+            else:
+                pass
         # If there is no message, it's in the process of being changed, keep checking for success
-        except StaleElementReferenceException:
+        except (StaleElementReferenceException, NoSuchElementException):
             pass
         except SystemExit:
             sys.exit()
@@ -525,7 +518,7 @@ one_time_events = []
 while i < number_of_rows:
     # This assumes the first row contains a class row, which it should.
     # Note that current_class is a string and also the class code
-    current_class = aria_find('list-id-table_colsubj', i)
+    current_class = aria_find('list-id-table_colsubj', rows[i])
 
     # If 'current_class' ends in a space, remove it
     if current_class[len(current_class):] == ' ':
@@ -539,7 +532,7 @@ while i < number_of_rows:
     j = 1
     while True:
         if i + j < number_of_rows:
-            if aria_find('list-id-table_colsubj', i + j) == '':
+            if aria_find('list-id-table_colsubj', rows[i + j]) == '':
                 # If we found a non-blank colsubj cell in the row, then that's the next class, class_rows = all
                 # the rows from i to the one before this row.
                 class_rows = i + j
@@ -558,46 +551,46 @@ while i < number_of_rows:
     # This loop adds the event objects to recurring_events and one_time_events
     j = i
     while j <= class_rows:
-        if aria_find('list-id-table_FK_CDI_INSTR_TYPE', j) == '':
+        if aria_find('list-id-table_FK_CDI_INSTR_TYPE', rows[j]) == '':
             # Make sure that the selected row actually has a lecture type (i.e., lecture, final, discussion, etc.)
             # If it doesn't have a lecture type, skip that row as it's not an event.
             j += 1
 
         # TODO: Either make sure all of these attributes are used somewhere or get rid of them
-        name = aria_find('list-id-table_CRSE_TITLE', i)  # The name of the event's class
+        name = aria_find('list-id-table_CRSE_TITLE', rows[j])  # The name of the event's class
 
-        prof = aria_find('list-id-table_PERSON_FULL_NAME', i)  # The class professor
+        prof = aria_find('list-id-table_PERSON_FULL_NAME', rows[j])  # The class professor
 
         # The event type (i.e., 'Lecture', 'Discussion', 'Final')
-        type = rows[j].find('td', {'aria-describedby': 'list-id-table_FK_CDI_INSTR_TYPE'}).get('title')
+        _type = rows[j].find('td', {'aria-describedby': 'list-id-table_FK_CDI_INSTR_TYPE'}).get('title')
 
-        sect = aria_find('list-id-table_SECT_CODE', j)  # The event section
+        sect = aria_find('list-id-table_SECT_CODE', rows[j])  # The event section
 
         # The days of the week on which the class takes place or the date of the event if it's a OneTime object
-        days = aria_find('list-id-table_DAY_CODE', j).replace('M', 'MO,').replace('Tu', 'TU,').replace('W', 'WE,')
+        days = aria_find('list-id-table_DAY_CODE', rows[j]).replace('M', 'MO,').replace('Tu', 'TU,').replace('W', 'WE,')
         days = days.replace('Th', 'TH,').replace('F', 'FR,').replace('Sa', 'SA,').replace('Su', 'SU,')
         days = days[:len(days) - 1]
 
         # The time at which the event takes place
-        time = aria_find('list-id-table_coltime', j).replace('a', '').replace(':', '')
+        time = aria_find('list-id-table_coltime', rows[j]).replace('a', '').replace(':', '')
 
         # The building in which the event takes place
-        bldg = aria_find('list-id-table_BLDG_CODE', j)
+        bldg = aria_find('list-id-table_BLDG_CODE', rows[j])
 
         # The room in which the event takes place
-        room = aria_find('list-id-table_ROOM_CODE', j)
+        room = aria_find('list-id-table_ROOM_CODE', rows[j])
 
         # If the event days attribute has a slash in it, it happens on a specific date, so it's a OneTime object
         if '/' in days:
-            days = aria_find('list-id-table_DAY_CODE', j)[2:].replace(' ', '')  # Remove weekday from date
-            if type == 'Make-up Sessions':
+            days = aria_find('list-id-table_DAY_CODE', rows[j])[2:].replace(' ', '')  # Remove weekday from date
+            if _type == 'Make-up Sessions':
                 # I don't like how 'Make-up Sessions' is plural when the event only happens once, so I fixed it.
-                type = 'Make-up Session'
+                _type = 'Make-up Session'
             # Add OneTime object to one_time_events
-            one_time_events.append(OneTime(current_class, name, prof, days, time, bldg, room, type))
+            one_time_events.append(OneTime(current_class, name, prof, days, time, bldg, room, _type))
         else:
-            # Add Recurring object to recurring_events
-            recurring_events.append(Recurring(current_class, name, type, sect, prof, days, time, bldg, room))
+            # Add Recurring event object to recurring_events
+            recurring_events.append(Recurring(current_class, name, _type, sect, prof, days, time, bldg, room))
         j += 1
 
     i = class_rows + 1
@@ -615,8 +608,10 @@ f3.write(
     '\nTZOFFSETTO:-0800\nTZNAME:PST\nDTSTART:19701101T020000\nRRULE:FREQ=YEARLY;BYMONTH=11;BYDAY=1SU\nEND:STANDARD'
     '\nEND:VTIMEZONE\n')  # Basic initialization stuff about timezone, the type of calendar, etc.
 
-# This loop goes through every event object and adds a calendar event to the Calendar.ics file
+# This loop goes through every Recurring event object and adds a calendar event to the Calendar.ics file
 for i in recurring_events:
+    f3.write('\nBEGIN:VEVENT\n')  # Initialize the calendar event
+
     # Currently, each event's time attribute is a string which looks like '1100-300p', '830-1230p'. Notice there is no
     # A.M. indicator, no colons, and no spaces. We need to get the start and end time each in the format HHMMSS
     start = i.time[:i.time.find('-')]  # The start time is made up by the digits to the left of the dash
@@ -652,44 +647,77 @@ for i in recurring_events:
         end = end.replace('p', '')
     end = end + '00'
 
+    # This is really hacky and hard to explain and there's definitely a better way to do it. Basically, we have this
+    # dilemma: We know the date and weekday that the quarter starts on. For example, FA2020 quarter starts on Thursday,
+    # October 1st. But many classes don't meet on Thursday, so we can't just tell the calendar that I have an event
+    # that starts on October 1st that repeats every Monday, Wednesday, and Friday, or it'll create an event for a class
+    # that doesn't exist! So instead, in order to tell the calendar the correct starting date, we have to add the
+    # number of days between the day of the week that the quarter starts on and the first day of the week that the
+    # class meets. For example, if I have a class that meets every Monday and Wednesday but the first day of the
+    # quarter is a Thursday, then the starting day of that class is the starting day of the quarter, plus the number of
+    # days between a Thursday and a Monday. I hope that makes sense...
+
+    # TODO: Rename these variables in a way that makes more clear their use
+    # First we have a list of the weekdays, twice.
     weekdays = ['MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU', 'MO', 'TU', 'WE', 'TH', 'FR', 'SA', 'SU']
     new_weekdays = []
+    num_days = 0
 
+    # We need a new list of the weekdays, but we want this list to start on the weekday that the quarter starts on
     for j in range(7):
         new_weekdays.append(weekdays[j + quarter_starts.weekday()])
 
+    # Now, we iterate through the new list of weekdays, starting with the day the quarter starts on, checking to see
+    # if that weekday is in the Recurring event object's days attribute. The index on which a day is first found is
+    # saved to num_days. For example, if the quarter starts on a Thursday, and the recurring event object we're
+    # looking at meets every Wednesday and Friday, the for loop will stop at 'FR', the second weekday in the
+    # new_weekdays list, resulting in a num_days of 1, meaning, the start date of the event is quarter_start + 1 day.
     for j in range(len(new_weekdays)):
         if new_weekdays[j] in i.days:
             num_days = j
             break
 
-    f3.write('\nBEGIN:VEVENT\n')
-    f3.write('DTSTART;TZID=America/Los_Angeles:' +
-             str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + start + '\n')
+    # Tells the calendar program when the event starts
+    # The start date, as explained earlier, is the day the quarter starts plus num_days
+    f3.write('DTSTART;TZID=America/Los_Angeles:'
+             + str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + start + '\n')
+
+    # Tells the calendar program when the event ends
     f3.write('DTEND;TZID=America/Los_Angeles:'
              + str(quarter_starts + datetime.timedelta(days=num_days)).replace('-', '') + 'T' + end + '\n')
 
+    # Tells the calendar program on what weekdays the recurring event happens and on what date it stops.
+    f3.write('RRULE:FREQ=WEEKLY;WKST=SU;UNTIL='
+             + str(quarter_ends + datetime.timedelta(days=1)).replace('-', '') + 'T000000Z;BYDAY=' + i.days + '\n')
+
+    # Writes the event summary with the class code and type
+    # If the event's building is is an online class, let the user know by putting 'ONLINE' in the event summary
     if i.bldg == 'RCLAS':
         f3.write('SUMMARY:' + i.code + ' ' + i.type + ' (ONLINE)' + '\n')
     else:
         f3.write('SUMMARY:' + i.code + ' ' + i.type + '\n')
 
-    f3.write('RRULE:FREQ=WEEKLY;WKST=SU;UNTIL='
-             + str(quarter_ends + datetime.timedelta(days=1)).replace('-', '') + 'T000000Z;BYDAY=' + i.days + '\n')
-
+    # If an event has a meeting on a weekday that is shared by a holiday, then add an exclusion date on that holiday.
+    # For example, if a Fall 2020 event meets every Thursday, then we will need to add an exclusion date on
+    # Thanksgiving, which is a Thursday.
     for j in holidays:
         if weekdays[j.weekday()] in i.days:
             f3.write('EXDATE;TZID=America/Los_Angeles:' + str(j).replace('-', '') + 'T' + start + '\n')
 
+    # Write the location as the building and room
+    # If the building is TBA, then don't show the user the room, as the room is obviously TBA as well.
     if i.bldg == 'TBA':
         f3.write('LOCATION:TBA\n')
     else:
         f3.write('LOCATION:' + i.bldg + ' ' + i.room + '\n')
 
-    f3.write('STATUS:CONFIRMED\n')
-    f3.write('END:VEVENT\n')
+    f3.write('STATUS:CONFIRMED\n')  # I don't know if this is necessary, but I'm adding it just in case
+    f3.write('END:VEVENT\n')  # Let's the calendar program that we're done with this event
 
+# Basically the same thing as the above loop, but for OneTime event objects instead of Recurring event objects.
 for i in one_time_events:
+    f3.write('\nBEGIN:VEVENT\n')  # Initialize the calendar event
+
     # See code block in previous for-loop
     start = i.time[:i.time.find('-')]
     end = i.time[i.time.find('-') + 1:]
@@ -724,26 +752,34 @@ for i in one_time_events:
         end = end.replace('p', '')
     end = end + '00'
 
-    f3.write('\nBEGIN:VEVENT\n')
+    # Tells the calendar program when the event starts and ends
     f3.write('DTSTART;TZID=America/Los_Angeles:' + str(year) + i.date[0:2] + i.date[3:5] + 'T' + start + '\n')
     f3.write('DTEND;TZID=America/Los_Angeles:' + str(year) + i.date[0:2] + i.date[3:5] + 'T' + end + '\n')
 
-    if i.bldg == 'RCLAS' and i.type == 'Make-Up Session':
+    # Writes the event summary with the class code and type
+    # If the event's building is is an online class and it's a make-up session, let the user know by putting 'ONLINE'
+    # in the event summary.
+    if i.bldg == 'RCLAS' and i.type == 'Make-up Session':
         f3.write('SUMMARY:' + i.code + ' ' + i.type + ' (ONLINE)' + '\n')
     else:
         f3.write('SUMMARY:' + i.code + ' ' + i.type + '\n')
 
+    # Write the location as the building and room
+    # If the building is TBA, then don't show the user the room, as the room is obviously TBA as well.
     if i.bldg == 'TBA':
         f3.write('LOCATION:TBA\n')
     else:
         f3.write('LOCATION:' + i.bldg + ' ' + i.room + '\n')
 
-    f3.write('STATUS:CONFIRMED\n')
-    f3.write('END:VEVENT\n')
+    f3.write('STATUS:CONFIRMED\n')  # I don't know if this is necessary, but I'm adding it just in case
+    f3.write('END:VEVENT\n')  # Let's the calendar program that we're done with this event
 
+# Add the events from the academic calendar
+# We're also borrowing the 'END:VCALENDAR' line from the academic_calendar
 f3.write(academic_calendar)
-f3.close()
+f3.close()  # Close the calendar file, we're done!
 
+# Tell the user the unique events we created:
 print('------------------------------------------------------------------------')
 print(str(len(recurring_events) + len(one_time_events)) + ' Unique Calendar Events Created:')
 print('------------------------------------------------------------------------')
