@@ -3,8 +3,8 @@ from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import NoSuchElementException, \
-    ElementNotInteractableException, \
-    StaleElementReferenceException
+                                       ElementNotInteractableException, \
+                                       StaleElementReferenceException
 from selenium.webdriver.support.ui import Select
 from bs4 import BeautifulSoup
 import datetime
@@ -21,7 +21,6 @@ def clear():
         _ = os.system('clear')
 
 
-# TODO: Decide if this should be moved to another module or not
 # The information in the table created by WebReg identifies all of its information by the 'aria-describedby' tag,
 # this function returns the text of the element with the desired identifier and cleans it up, so to speak.
 def aria_find(desc, element):
@@ -29,7 +28,6 @@ def aria_find(desc, element):
         '    ', ' ').replace('   ', ' ').replace('  ', ' ').strip()
 
 
-# TODO: Decide if this should be moved to another module or not
 # This function, given a multi-line string, removes all lines that start with the selected substring.
 def remove_line(text, line_start) -> str:
     k = text.find(line_start)
@@ -42,38 +40,33 @@ def remove_line(text, line_start) -> str:
     return text
 
 
-# TODO: Decide if this should be moved to another module or not
-# TODO: Remove/rename any __init__ parameters that are either unused or shadowed by outer scope
 # This class is used to store the identifying information for any recurring event
 class Recurring:
-    def __init__(self, code, name, _type, sect, prof, days, time, bldg, room):
+    def __init__(self, code, _name, _type, section, professor, _days, _time, building, _room):
         self.code = code
-        self.name = name
+        self.name = _name
         self.type = _type
-        self.sect = sect
-        self.prof = prof
-        self.days = days
-        self.time = time
-        self.bldg = bldg
-        self.room = room
+        self.sect = section
+        self.prof = professor
+        self.days = _days
+        self.time = _time
+        self.bldg = building
+        self.room = _room
 
 
-# TODO: Decide if this should be moved to another module or not
-# TODO: Remove/rename any __init__ parameters that are either unused or shadowed by outer scope
 # This class is used to store the identifying information for any one-time event
 class OneTime:
-    def __init__(self, code, name, prof, date, time, bldg, room, type):
+    def __init__(self, code, _name, professor, date, _time, building, _room, _type):
         self.code = code
-        self.name = name
-        self.prof = prof
+        self.name = _name
+        self.prof = professor
         self.date = date
-        self.time = time
-        self.bldg = bldg
-        self.room = room
-        self.type = type
+        self.time = _time
+        self.bldg = building
+        self.room = _room
+        self.type = _type
 
 
-# TODO: Decide if there should be a separate module for the actual gathering of information, for clarity's sake
 # Asks the user if they want to get the information from a file or from a website
 clear()
 choice = input('Would you like to extract the information from:\n[1] The WebReg website\n[2] A file\n')
@@ -597,6 +590,7 @@ while i < number_of_rows:
 
 print('Creating \'Calendar.ics\'...')
 
+# TODO: Let the user choose where they want to save the file
 # Now we create the actual Calendar.ics file, finally.
 f3 = open('Calendar.ics', 'w+')  # Open the file, create if it doesn't exist
 f3.write(
