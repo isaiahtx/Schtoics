@@ -1,4 +1,3 @@
-# This is literally the definition of spaghetti code. But it works! Good luck trying to follow it
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
@@ -72,13 +71,13 @@ clear()
 choice = input('Would you like to extract the information from:\n[1] The WebReg website\n[2] A file\n')
 clear()
 
-print('------------------------------------------------------------------------')
+print('--------------------------------------------------------------------------------')
 
 if choice == '1':  # If the user decides to extract the schedule information from WebReg:
     print('Extracting from WebReg: ')
-    print('------------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------')
     print('ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD\'S WEBSITE')
-    print('------------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------')
 
     # TODO: Find a way to not show the password as the user is typing it, instead show dots or asterisks
     # Asks the user for their UCSD username and password
@@ -87,15 +86,15 @@ if choice == '1':  # If the user decides to extract the schedule information fro
 
     # 'Censors' the password, so to speak.
     clear()
-    print('------------------------------------------------------------------------\n'
+    print('--------------------------------------------------------------------------------\n'
           'Extracting from WebReg:\n'
-          '------------------------------------------------------------------------\n'
+          '--------------------------------------------------------------------------------\n'
           'ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD\'S WEBSITE\n'
-          '------------------------------------------------------------------------\n'
+          '--------------------------------------------------------------------------------\n'
           'What is your UCSD username: ' + user + '\n' +
           'What is your password: ' + '*' * len(password))
 
-    print('------------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------')
     print('Starting webdriver, be patient, this process may take long...')
 
     # Initializes the scraper as headless
@@ -161,7 +160,10 @@ if choice == '1':  # If the user decides to extract the schedule information fro
             else:  # If a message is given saying that something other than the request was sent, exit
                 sys.exit()
         except SystemExit:
-            print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text + '\nExiting...')
+            # TODO: Fix this lol
+            print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+            print('If you see a blank line above, there was an error with the script. Try running it again')
+            print('\nExiting...')
             driver.close()
             sys.exit()
         except NoSuchElementException:  # If no message has come up, assume it's still loading and try again
@@ -217,7 +219,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     select = Select(driver.find_element_by_id('startpage-select-term'))
 
     # Display the dropdown options to the user
-    print('------------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------')
     print('Select desired quarter:')
     for i in range(len(dropdown_options)):
         print('[' + str(i + 1) + '] ' + dropdown_options[i].text)
@@ -247,7 +249,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
         print('That is not a valid option.\nExiting...')
         sys.exit()
 
-    print('------------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------')
     print('Waiting for page to load...')
 
     # This loop clicks "go", gathers the page source, and checks for any error message
@@ -299,11 +301,11 @@ if choice == '1':  # If the user decides to extract the schedule information fro
 
 elif choice == '2':  # If the user decides to extract the schedule information from a file:
     print('Extracting from a file:')
-    print('------------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------')
     print('Go to https://act.ucsd.edu/webreg2/start, sign in, make sure your')
     print('schedule is shown on the page. Right click, \'Save Page As\', and save')
     print('the file.')
-    print('------------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------')
     filename = input('Please type the path to the file location:\n')
 
     # If the user doesn't specify a filename, resort to the example_input.html file provided
@@ -314,7 +316,7 @@ elif choice == '2':  # If the user decides to extract the schedule information f
     if '.' not in filename:
         filename = filename + '.html'
 
-    print('------------------------------------------------------------------------')
+    print('--------------------------------------------------------------------------------')
 
     # We need to manually ask the user for the quarter and year of their schedule
     try:
@@ -322,9 +324,9 @@ elif choice == '2':  # If the user decides to extract the schedule information f
                             'Summer Session 1\n[5] Summer Session 2\n'))
         if quarter - 1 not in range(5):
             raise ValueError
-        print('------------------------------------------------------------------------')
+        print('--------------------------------------------------------------------------------')
         year = int(input('What year is the selected schedule from?\n'))
-        print('------------------------------------------------------------------------')
+        print('--------------------------------------------------------------------------------')
     except ValueError:  # If the input is not an integer 1-5, then exit
         print('Invalid input.\nExiting...')
         sys.exit()
@@ -768,17 +770,31 @@ for i in one_time_events:
     f3.write('STATUS:CONFIRMED\n')  # I don't know if this is necessary, but I'm adding it just in case
     f3.write('END:VEVENT\n')  # Let's the calendar program that we're done with this event
 
-# Add the events from the academic calendar
-# We're also borrowing the 'END:VCALENDAR' line from the academic_calendar
-f3.write(academic_calendar)
-f3.close()  # Close the calendar file, we're done!
+print('--------------------------------------------------------------------------------')
+try:
+    # Ask the user if they want to add the events from the academic calendar to the calendar upload.
+    include_academic_calendar = input('Do you want to include the academic calendar events in the calendar file? If\n'
+                                      'you have used this tool before, choose no. Otherwise, choose yes (Y/n): ').lower()
+    if include_academic_calendar == 'y' or include_academic_calendar == 'yes' or include_academic_calendar == '':
+        f3.write(academic_calendar)  # Write the entirety of the contents of academic_calendar to the file
+        f3.close()  # Close the file, we're done!
+    elif include_academic_calendar == 'n' or include_academic_calendar == 'no':
+        f3.write('END:VCALENDAR')  # Only write the calendar ending statement to the file
+        f3.close()  # Close the file, we're done!
+    else:
+        raise ValueError
+    print('--------------------------------------------------------------------------------')
+except ValueError:  # If the user inputs something other than nothing, 'y', 'yes', 'n', or 'no', then exit
+    print('Invalid input.\nExiting...')
+    f3.close()
+    sys.exit()
+
 
 # Tell the user the unique events we created:
-print('------------------------------------------------------------------------')
 print(str(len(recurring_events) + len(one_time_events)) + ' Unique Calendar Events Created:')
-print('------------------------------------------------------------------------')
+print('--------------------------------------------------------------------------------')
 for i in recurring_events:
     print('Recurring Event:........' + i.code + ' ' + i.type + ' on ' + i.days)
 for i in one_time_events:
     print('One-Time Event:.........' + i.code + ' ' + i.type + ' on ' + i.date[:6] + str(year))
-print('------------------------------------------------------------------------')
+print('--------------------------------------------------------------------------------')
