@@ -26,5 +26,7 @@ When the script is finished, the completed Calendar.ics file will be placed in t
 * Choose the calendar you created from the dropdown
 * Click import
 
+If you have problems you can try using an incognito window or use another browser (Firefox seems to work best).
+
 # License
 [GNU GPLv3](https://choosealicense.com/licenses/gpl-3.0/)
