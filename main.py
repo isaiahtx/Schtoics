@@ -3,7 +3,8 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import NoSuchElementException, \
                                        ElementNotInteractableException, \
-                                       StaleElementReferenceException
+                                       StaleElementReferenceException, \
+                                       WebDriverException
 from selenium.webdriver.support.ui import Select
 from bs4 import BeautifulSoup
 import datetime
@@ -29,11 +30,11 @@ def aria_find(desc, element):
 
 # This function, given a multi-line string, removes all lines that start with the selected substring.
 def remove_line(text, line_start) -> str:
-    k = text.find(line_start)
+    i_keep_running_out_of_indices = text.find(line_start)
     while True:
-        if k != -1:
-            text = text[:k - 1] + text[text.find('\n', k):]
-            k = text.find(line_start, k)
+        if i_keep_running_out_of_indices != -1:
+            text = text[:i_keep_running_out_of_indices - 1] + text[text.find('\n', i_keep_running_out_of_indices):]
+            i_keep_running_out_of_indices = text.find(line_start, i_keep_running_out_of_indices)
         else:
             break
     return text
@@ -159,13 +160,19 @@ if choice == '1':  # If the user decides to extract the schedule information fro
                 break
             else:  # If a message is given saying that something other than the request was sent, exit
                 sys.exit()
-        except SystemExit:
-            # TODO: Fix this lol
-            print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
-            print('If you see a blank line above, there was an error with the script. Try running it again')
-            print('\nExiting...')
-            driver.close()
-            sys.exit()
+        except SystemExit:  # TODO: Fix this monstrosity below lol
+            if driver.find_element_by_xpath('//span[@class=\'message-text\']').text == '':
+                pass
+            else:
+                if 'Pushed a login request' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
+                    print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+                    break
+                else:
+                    print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+                    print('If you see a blank line above, there was an error with the script. Try running it again')
+                    print('\nExiting...')
+                    driver.close()
+                    sys.exit()
         except NoSuchElementException:  # If no message has come up, assume it's still loading and try again
             pass
 
@@ -173,15 +180,15 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     while True:
         try:
             # If we get a success message, continue on!
-            if 'Success' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
-                print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+            if 'Success' in driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text:
+                print(driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text)
                 break
             # If the message still says 'Pushed a login request...' then we're still waiting on the user, try again
-            elif 'Pushed a login request' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
+            elif 'Pushed a login request' in driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text:
                 pass
             # If the message says it's denied, exit
-            elif 'denied' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
-                print('Error: ' + driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+            elif 'denied' in driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text:
+                print('Error: ' + driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text)
                 driver.close()
                 sys.exit()
             # If none of the above work, it's still loading or being changed, try again
@@ -190,7 +197,11 @@ if choice == '1':  # If the user decides to extract the schedule information fro
         # If there is no message, it's in the process of being changed, keep checking for success
         except (StaleElementReferenceException, NoSuchElementException):
             pass
+        except WebDriverException:  # This is weird, but if we get a WebDriver error, that means the sign in work.
+            print("Success! Logging you in...")
+            break
         except SystemExit:
+            print('Exiting...')
             sys.exit()
 
     # This loop looks for the dropdown on WebReg which has list of available quarters that we can pull a schedule from
@@ -567,7 +578,7 @@ while i < number_of_rows:
         days = days[:len(days) - 1]
 
         # The time at which the event takes place
-        time = aria_find('list-id-table_coltime', rows[j]).replace('a', '').replace(':', '')
+        time = aria_find('list-id-table_coltime', rows[j])
 
         # The building in which the event takes place
         bldg = aria_find('list-id-table_BLDG_CODE', rows[j])
@@ -589,6 +600,87 @@ while i < number_of_rows:
         j += 1
 
     i = class_rows + 1
+
+# ---------------------------------------------------------------------------------------------------------
+# BEGIN DISGUSTING SECTION, PREPARE FOR MAXIMUM SPAGHETTI
+
+print('Searching for duplicate events...')
+
+# Stores a list of lists with [class, type, days] for each recurring event
+meeting_names = []
+for i in recurring_events:
+    meeting_names.append([i.code, i.type, i.days])
+
+# Stores only the duplicates from meeting_names in a new variable duplicates
+duplicates = []
+for i in meeting_names:
+    if meeting_names.count(i) > 1 and i not in duplicates:
+        duplicates.append(i)
+
+# For every recurring event list in duplicates, add the times of all the events that mach that event to the event list
+# I.e., now duplicates is full of lists that look like: [class, type, days, meeting_time_1, meeting_time_2, etc.)
+for i in range(len(recurring_events)):
+    for j in duplicates:
+        if recurring_events[i].code == j[0] and recurring_events[i].type == j[1] and recurring_events[i].days == j[2]:
+            j.append(recurring_events[i].time)
+
+if len(duplicates) == 0:  # If we've reached this points and duplicates is empty, then there are no duplicates (duh)
+    print('None found.')
+else:  # If duplicate events are found,
+    print('--------------------------------------------------------------------------------')
+    for i in duplicates:  # For every list in duplicates,
+        print('Duplicate events found, which one would you like to keep:')
+        k = 1
+        for j in range(3, len(i)):  # Print each event with its times
+            print('(' + str(k) + ') ' + i[0] + ' ' + i[1] + ' on ' + i[2] + ' at ' + i[j])
+            k += 1
+        print('(' + str(k) + ') Keep All')
+        print('(' + str(k + 1) + ') Keep None')
+
+        try:  # Get input, make sure it's gucci
+            keep = int(input('').replace(' ', ''))
+        except ValueError:
+            print('Invalid input.\nExiting...')
+            sys.exit()
+
+        #  Now decide what to do based on the number the user selected
+        removals = []
+        m = True
+        if keep == k + 1:  # Mark everything for removal
+            for x in range(len(recurring_events)):
+                if recurring_events[x].code == i[0] and recurring_events[x].type == i[1] \
+                                                    and recurring_events[x].days == i[2]:
+                    removals.append(x)
+                    m = True
+        elif keep == k:  # Mark nothing for removal
+            pass
+        elif keep <= 0 or keep >= k + 2:  # Invalid input
+            print('Invalid input.\nExiting...')
+            sys.exit()
+        else:  # Mark everything but the selected one for removal
+            for x in range(len(recurring_events)):
+                if recurring_events[x].code == i[0] and recurring_events[x].type == i[1] \
+                                                    and recurring_events[x].days == i[2]:
+                    removals.append(x)
+            for x in range(len(recurring_events)):
+                if recurring_events[x].code == i[0] and recurring_events[x].type == i[1] \
+                                                    and recurring_events[x].days == i[2] \
+                                                    and i[keep + 2] == recurring_events[x].time:
+                    removals.remove(x)
+                    break
+        print('--------------------------------------------------------------------------------')
+        #  Actually removes items marked for removal
+        for index in sorted(removals, reverse=True):
+            del recurring_events[index]
+# END DISGUSTING SECTION, NOW BACK TO YOUR REGULARLY SCHEDULED CODE THAT'S HAS A NORMAL AMOUNT OF SPAGHETTI
+# ---------------------------------------------------------------------------------------------------------
+
+# We'll need this later
+for i in recurring_events:
+    i.time = i.time.replace('a', '').replace(':', '')
+
+for i in one_time_events:
+    i.time = i.time.replace('a', '').replace(':', '')
 
 print('Creating \'Calendar.ics\'...')
 
