@@ -63,7 +63,7 @@ label.pack()
 
 
 
-# select file button
+# select file button TODO: if windows use tk.Button
 button = Button(frame, text="choose file",  padx=10, pady=1, bg=YELLOW, fg=BLUE, borderless=1, highlightthickness=0, activebackground='#fa0', activeforeground='black', command=getFile)
 button.place(relx=0.2, rely=0.2, relheight=0.3, relwidth=0.3)
 
