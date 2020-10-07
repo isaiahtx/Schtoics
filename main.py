@@ -68,7 +68,7 @@ class OneTime:
 
 # Asks the user if they want to get the information from a file or from a website
 clear()
-choice = input('Would you like to extract the information from:\n[1] The WebReg website\n[2] A file\n')
+choice = input('Would you like to extract the information from:\n[1] The WebReg website\n[2] A file\n') # TODO add quit option esc, ^c, q
 clear()
 
 print('--------------------------------------------------------------------------------')
@@ -592,7 +592,7 @@ while i < number_of_rows:
 
 print('Creating \'Calendar.ics\'...')
 
-# TODO: Let the user choose where they want to save the file
+# TODO: Let the user choose where they want to save the file BY DEFAULT SAVE WHERE WEBREG FILE IS
 # Now we create the actual Calendar.ics file, finally.
 f3 = open('Calendar.ics', 'w+')  # Open the file, create if it doesn't exist
 f3.write(
