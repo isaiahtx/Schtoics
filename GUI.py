@@ -50,11 +50,11 @@ def getDropdownValue(var):
 logo = Image.open('./cal.jpeg') # seems to only work with jpg
 tklogo = ImageTk.PhotoImage(logo)
 size = logo.size
-title.create_image(30, 30, anchor='center', image=tklogo)
+# title.create_image(30, 30, anchor='center', image=tklogo) # removed logo for aesthetic purposes
 
-text = tk.Text(frame)
-text.insert('1.0', 'uh no longer needed')
-text.place(relx=0.6, rely=0.2, relheight=0.3, relwidth=0.3)
+# text = tk.Text(frame)
+# text.insert('1.0', 'uh no longer needed')
+# text.place(relx=0.6, rely=0.2, relheight=0.3, relwidth=0.3)
 
 var = tk.StringVar()
 label = tk.Label(title, textvariable=var, bg=YELLOW)
@@ -65,7 +65,7 @@ label.pack()
 
 # select file button TODO: if windows use tk.Button
 button = Button(frame, text="choose file",  padx=10, pady=1, bg=YELLOW, fg=BLUE, borderless=1, highlightthickness=0, activebackground='#fa0', activeforeground='black', command=getFile)
-button.place(relx=0.2, rely=0.2, relheight=0.3, relwidth=0.3)
+button.place(relx=0.3, rely=0.3, relheight=0.3, relwidth=0.4)
 
 
 
@@ -86,7 +86,7 @@ quarterDropdown = tk.OptionMenu(frame, quarter, "1", "2", "3")
 quarterDropdown.config(bg = BLUE, font=dropdownFont)
 menu = root.nametowidget(quarterDropdown.menuname)
 menu.config(font=dropdownFont)
-quarterDropdown.place(relx=0.1, rely=0.05, relwidth=0.3)
+quarterDropdown.place(relx=0.1, rely=0.05, relwidth=0.3) # TODO: add labels for these
 
 
 
