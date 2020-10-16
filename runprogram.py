@@ -590,8 +590,7 @@ def mainFunction(quarter=1, year=2020, filename='./webreg.html', keepDuplicates=
     print('--------------------------------------------------------------------------------')
     try:
         # Ask the user if they want to add the events from the academic calendar to the calendar upload.
-        include_academic_calendar = input('Do you want to include the academic calendar events in the calendar file? If\n'
-                                        'you have used this tool before, choose no. Otherwise, choose yes (Y/n): ').lower()
+        include_academic_calendar = 'y'
         if include_academic_calendar == 'y' or include_academic_calendar == 'yes' or include_academic_calendar == '':
             f3.write(academic_calendar)  # Write the entirety of the contents of academic_calendar to the file
             f3.close()  # Close the file, we're done!
