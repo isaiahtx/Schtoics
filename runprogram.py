@@ -12,7 +12,7 @@ import sys
 import os
 import requests
 
-def mainFunction(quarter=1, year=2020, filename="./webreg.html"):
+def mainFunction(quarter=1, year=2020, filename='./webreg.html', keepDuplicates=False):
     # Defines a function to clear the console based on the OS being used
     def clear():
         if os.name == 'nt':
@@ -358,7 +358,12 @@ def mainFunction(quarter=1, year=2020, filename="./webreg.html"):
             print('(' + str(k + 1) + ') Keep None')
 
             try:  # Get input, make sure it's gucci
-                keep = int(input('').replace(' ', ''))
+                # keep = int(input('').replace(' ', ''))
+                print('removed this for GUI because I am lazy, default is set to remove all')
+                if (keepDuplicates):
+                    keep = k
+                else:
+                    keep = k + 1
             except ValueError:
                 print('Invalid input.\nExiting...')
                 sys.exit()
