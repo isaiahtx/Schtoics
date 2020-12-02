@@ -11,6 +11,7 @@ import datetime
 import sys
 import os
 import requests
+import time
 
 
 # Defines a function to clear the console based on the OS being used
@@ -267,9 +268,12 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     while True:
         try:
             driver.find_element_by_id('list-id-table')  # Look for the table schedule
+            driver.find_element_by_class_name('ui-jqgrid-btable')
             print('Gathering data...')
             # If the table schedule is found, save the page source as 'input_source' and close the webdriver
             # We are going to use BeautifulSoup for the rest as I like it better than Selenium
+            # TODO: FIX THIS!!!! MOST IMPORTANT!!! RANDOM SLEEP ARE BAD!!!
+            time.sleep(4)  # If I don't have it wait, it'll capture the page before it loads resulting in a broken table
             input_source = BeautifulSoup(driver.page_source, 'html.parser')
             print('Closing webdriver...')
             driver.close()
@@ -321,7 +325,7 @@ elif choice == '2':  # If the user decides to extract the schedule information f
 
     # If the user doesn't specify a filename, resort to the example_input.html file provided
     if filename == '':
-        filename = 'example_input'
+        filename = 'test'
 
     # If the user doesn't specify a file extension, add '.html' to the end of the filename
     if '.' not in filename:
@@ -493,7 +497,7 @@ print('Parsing data...')
 
 # Initializing some variables used for later:
 # Narrows down the html input to just the table of interest
-input_source = input_source.find('table', id='list-id-table')
+input_source = input_source.find('table', id='list-id-table', class_="ui-jqgrid-btable")
 
 # Stores the number of rows in the table
 number_of_rows = len(input_source.find_all('tr', role='row', tabindex='-1'))
@@ -600,7 +604,6 @@ while i < number_of_rows:
         j += 1
 
     i = class_rows + 1
-
 # ---------------------------------------------------------------------------------------------------------
 # BEGIN DISGUSTING SECTION, PREPARE FOR MAXIMUM SPAGHETTI
 
@@ -615,6 +618,7 @@ for i in recurring_events:
 duplicates = []
 for i in meeting_names:
     if meeting_names.count(i) > 1 and i not in duplicates:
+        print(i)
         duplicates.append(i)
 
 # For every recurring event list in duplicates, add the times of all the events that mach that event to the event list
