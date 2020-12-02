@@ -3,6 +3,7 @@ Pronounced "Skuh-tow-icks", Schtoics is a tool that converts a UCSD WebReg sched
 
 This script *should* work indefinitely, provided UCSD does not change WebReg or the [academic calendar page](https://blink.ucsd.edu/instructors/resources/academic/calendars/2020.html) in any major ways.
 
+This was a project done for fun on my own time, I do not make any guarantees about its functionality.
 
 # Installation
 
