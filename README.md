@@ -10,7 +10,7 @@ Requires Python 3. Install the required python packages with `pip install -r req
 
 # Usage
 
-To run, download and run the `main.py` script with python: `python main.py`. There are two options, you can have the script either sign into WebReg for you and scrape the required information, or you can provide the program with an html copy of your WebReg page or just the table with your schedule on it.
+To run, download and run the `main.py` script with python: `python main.py`. There are two options, you can have the script either sign into WebReg for you and scrape the required information, or you can provide the program with an html copy of your WebReg page or just the table with your schedule on it. **When providing the script with a copy of your WebReg page, make sure the file is located in the same directory as the script, and make sure the table is actually included in the file (double check by opening the .html file and look for the table there)**. If you do not see the table after saving the page, inspect element and copy and paste the html code for the table into a file and put it in the same document (make sure it has some sort of extension, if there is none, the script will assume you left out `.html`).
 
 **If you are providing the script with an html file, it might not accept the file unless it is located in the same directory as the script itself.**
 
