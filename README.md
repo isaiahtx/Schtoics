@@ -13,9 +13,7 @@ There are two options, you can have the script either sign into WebReg for you a
 
 * **Windows**: Simply download and run the Schtoics.exe file found in [releases](https://github.com/isaiahtx/Schtoics/releases), make sure to have Firefox installed
 
-* **macOS**: Download the Schtoics.zip file, extract the .app file. In the same directory as the .app file, run the command `./Schtoics.app/Contents/MacOS/main`.
-
-* **Linux**: Compile it on your own, sorry :(
+* **macOS/Linux**: Compile it on your own, sorry :(
 
 # Adding to Google Calendar
 * Go to [calendar.google.com](https://calendar.google.com/)
