@@ -7,7 +7,7 @@ This was a project done for fun on my own time, I do not make any guarantees abo
 
 # Installation
 
-12/25/2020: .exe added! Go to [releases](https://github.com/isaiahtx/Schtoics/releases/) in order to get it. The instructions are the exact same, just run the .exe. If using a .html file, simply place the .html file in the same folder as the directory in which the .exe file is located.
+12/25/2020: .exe added! Go to [releases](https://github.com/isaiahtx/Schtoics/releases/) in order to get it. The instructions are the exact same, just run the `Schtoics.exe` included in the zip folder. Make sure the `geckodriver.exe` file is in the same folder as `Schtoics.exe`. If using a .html file, simply place the .html file in the same folder as the directory in which the .exe file is located.
 
 Requires Python 3. Install the required python packages with `pip install -r requirements.txt`. [Geckodriver](https://github.com/mozilla/geckodriver/releases) and [Firefox](https://www.mozilla.org/en-US/firefox/) both need to be installed and added to your PATH. 
 
