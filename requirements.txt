@@ -10,4 +10,4 @@ pywin32-ctypes==0.2.0
 requests==2.25.1
 selenium==3.141.0
 soupsieve==2.1
-urllib3==1.26.2
+urllib3>=1.26.4
