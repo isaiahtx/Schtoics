@@ -7,7 +7,7 @@ from selenium.common.exceptions import NoSuchElementException, \
                                        WebDriverException
 from selenium.webdriver.support.ui import Select
 from bs4 import BeautifulSoup
-from pywebio.input import input, FLOAT
+from pywebio.input import input, select, file_upload, FLOAT, PASSWORD
 from pywebio.output import put_text
 import datetime
 import sys
@@ -72,7 +72,9 @@ class OneTime:
 
 # Asks the user if they want to get the information from a file or from a website
 clear()
-choice = input('Would you like to extract the information from:\n[1] The WebReg website\n[2] A file\n')
+options = [('[1] The WebReg website', '1', [True]), ('[2] A file', '2')]
+choice = select('Where would you like to extract the information from?', options)
+put_text('choice', choice)
 clear()
 
 put_text('--------------------------------------------------------------------------------')
@@ -83,12 +85,10 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     put_text('ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD\'S WEBSITE')
     put_text('--------------------------------------------------------------------------------')
 
-    # TODO: Find a way to not show the password as the user is typing it, instead show dots or asterisks
     # Asks the user for their UCSD username and password
     user = input('What is your UCSD username: ')
-    password = input('What is your password: ')
+    password = input('What is your password: ', PASSWORD)
 
-    # 'Censors' the password, so to speak.
     clear()
     put_text('--------------------------------------------------------------------------------\n'
           'Extracting from WebReg:\n'
@@ -99,7 +99,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
           'What is your password: ' + '*' * len(password))
 
     put_text('--------------------------------------------------------------------------------')
-    put_text('Starting webdriver, be patient, this process may take long...')
+    put_text('Starting webdriver, please be patient, this process may take a while...')
 
     # Initializes the scraper as headless
     options = Options()
@@ -323,7 +323,7 @@ elif choice == '2':  # If the user decides to extract the schedule information f
     put_text('schedule is shown on the page. Right click, \'Save Page As\', and save')
     put_text('the file.')
     put_text('--------------------------------------------------------------------------------')
-    filename = input('Please type the path to the file location:\n')
+    filename = input('Please type the path to the file location:\n') # TODO: replace this with file_upload() input
 
     # If the user doesn't specify a filename, resort to the example_input.html file provided
     if filename == '':
@@ -385,6 +385,7 @@ else:  # If somehow 'quarter' is not an integer 1-5, then exit, although I belie
     put_text('Invalid input.\nExiting...')
     sys.exit()
 
+clear()
 # Gets the chosen academic calendar and saves it to a file
 put_text('Downloading UCSD ' + years + ' Academic Calendar')
 r = requests.get('https://blink.ucsd.edu/_files/SCI-tab/' + years + '-academic-calendar.ics')
@@ -896,3 +897,5 @@ for i in recurring_events:
 for i in one_time_events:
     put_text('One-Time Event:.........' + i.code + ' ' + i.type + ' on ' + i.date[:6] + str(year))
 put_text('--------------------------------------------------------------------------------')
+
+# TODO: give a nice exit message with proceeding instructions and file path
