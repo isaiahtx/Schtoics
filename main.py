@@ -7,6 +7,8 @@ from selenium.common.exceptions import NoSuchElementException, \
                                        WebDriverException
 from selenium.webdriver.support.ui import Select
 from bs4 import BeautifulSoup
+from pywebio.input import input, FLOAT
+from pywebio.output import put_text
 import datetime
 import sys
 import os
@@ -73,13 +75,13 @@ clear()
 choice = input('Would you like to extract the information from:\n[1] The WebReg website\n[2] A file\n')
 clear()
 
-print('--------------------------------------------------------------------------------')
+put_text('--------------------------------------------------------------------------------')
 
 if choice == '1':  # If the user decides to extract the schedule information from WebReg:
-    print('Extracting from WebReg: ')
-    print('--------------------------------------------------------------------------------')
-    print('ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD\'S WEBSITE')
-    print('--------------------------------------------------------------------------------')
+    put_text('Extracting from WebReg: ')
+    put_text('--------------------------------------------------------------------------------')
+    put_text('ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD\'S WEBSITE')
+    put_text('--------------------------------------------------------------------------------')
 
     # TODO: Find a way to not show the password as the user is typing it, instead show dots or asterisks
     # Asks the user for their UCSD username and password
@@ -88,7 +90,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
 
     # 'Censors' the password, so to speak.
     clear()
-    print('--------------------------------------------------------------------------------\n'
+    put_text('--------------------------------------------------------------------------------\n'
           'Extracting from WebReg:\n'
           '--------------------------------------------------------------------------------\n'
           'ALL INFO IS STORED LOCALLY AND NEVER PLACED ANYWHERE BUT UCSD\'S WEBSITE\n'
@@ -96,8 +98,8 @@ if choice == '1':  # If the user decides to extract the schedule information fro
           'What is your UCSD username: ' + user + '\n' +
           'What is your password: ' + '*' * len(password))
 
-    print('--------------------------------------------------------------------------------')
-    print('Starting webdriver, be patient, this process may take long...')
+    put_text('--------------------------------------------------------------------------------')
+    put_text('Starting webdriver, be patient, this process may take long...')
 
     # Initializes the scraper as headless
     options = Options()
@@ -107,11 +109,11 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     driver = webdriver.Firefox(options=options)
 
     # Navigates to WebReg
-    print('Connecting to WebReg...')
+    put_text('Connecting to WebReg...')
     driver.get('https://act.ucsd.edu/webreg2/start')
 
     # Enters the username and password in their respective fields
-    print('Entering username and password...')
+    put_text('Entering username and password...')
     elem = driver.find_element_by_name('urn:mace:ucsd.edu:sso:username')
     elem.clear()
     elem.send_keys(user)
@@ -121,17 +123,17 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     elem.send_keys(Keys.RETURN)
 
     # This loop checks to see if the next page has loaded or if the password and username are incorrect.
-    print('Verifying...')
+    put_text('Verifying...')
     while True:
         try:
             assert 'UCSD SSO' in driver.title  # Check if we've reached the authentication page
-            print('Sign-in Successful.')
-            print('Waiting for page to load...')
+            put_text('Sign-in Successful.')
+            put_text('Waiting for page to load...')
             break  # If it is there, then break the loop, continue on
         except AssertionError:  # If 'UCSD SSO' is not in the title, check to see if the password is wrong
             try:
                 driver.find_element_by_id('_login_error_message')  # Look for an error message
-                print('Password and username incorrect.\nExiting...')
+                put_text('Password and username incorrect.\nExiting...')
                 driver.close()
                 sys.exit()  # If the error message is found exit the program
             except NoSuchElementException:
@@ -157,7 +159,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
         try:
             # Check to make sure that the 2FA request was sent
             if 'Pushed a login request' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
-                print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+                put_text(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
                 break
             else:  # If a message is given saying that something other than the request was sent, exit
                 sys.exit()
@@ -166,12 +168,12 @@ if choice == '1':  # If the user decides to extract the schedule information fro
                 pass
             else:
                 if 'Pushed a login request' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
-                    print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+                    put_text(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
                     break
                 else:
-                    print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
-                    print('If you see a blank line above, there was an error with the script. Try running it again')
-                    print('\nExiting...')
+                    put_text(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+                    put_text('If you see a blank line above, there was an error with the script. Try running it again')
+                    put_text('\nExiting...')
                     driver.close()
                     sys.exit()
         except NoSuchElementException:  # If no message has come up, assume it's still loading and try again
@@ -182,14 +184,14 @@ if choice == '1':  # If the user decides to extract the schedule information fro
         try:
             # If we get a success message, continue on!
             if 'Success' in driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text:
-                print(driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text)
+                put_text(driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text)
                 break
             # If the message still says 'Pushed a login request...' then we're still waiting on the user, try again
             elif 'Pushed a login request' in driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text:
                 pass
             # If the message says it's denied, exit
             elif 'denied' in driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text:
-                print('Error: ' + driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text)
+                put_text('Error: ' + driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text)
                 driver.close()
                 sys.exit()
             # If none of the above work, it's still loading or being changed, try again
@@ -199,10 +201,10 @@ if choice == '1':  # If the user decides to extract the schedule information fro
         except (StaleElementReferenceException, NoSuchElementException):
             pass
         except WebDriverException:  # This is weird, but if we get a WebDriver error, that means the sign in work.
-            print("Success! Logging you in...")
+            put_text("Success! Logging you in...")
             break
         except SystemExit:
-            print('Exiting...')
+            put_text('Exiting...')
             sys.exit()
 
     # This loop looks for the dropdown on WebReg which has list of available quarters that we can pull a schedule from
@@ -231,16 +233,16 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     select = Select(driver.find_element_by_id('startpage-select-term'))
 
     # Display the dropdown options to the user
-    print('--------------------------------------------------------------------------------')
-    print('Select desired quarter:')
+    put_text('--------------------------------------------------------------------------------')
+    put_text('Select desired quarter:')
     for i in range(len(dropdown_options)):
-        print('[' + str(i + 1) + '] ' + dropdown_options[i].text)
+        put_text('[' + str(i + 1) + '] ' + dropdown_options[i].text)
 
     # If the user's input cannot be converted to an integer or is not a valid dropdown index, exit
     try:
         user_selection = dropdown_options[int(input('').replace(' ', '')) - 1]
     except ValueError:
-        print('Invalid input.\nExiting...')
+        put_text('Invalid input.\nExiting...')
         driver.close()
         sys.exit()
 
@@ -258,24 +260,24 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     except ValueError:
         # If somehow the last four digits aren't all numbers, the dropdown option the user selected is either not
         # supported or was changed in a way that I didn't anticipate.
-        print('That is not a valid option.\nExiting...')
+        put_text('That is not a valid option.\nExiting...')
         sys.exit()
 
-    print('--------------------------------------------------------------------------------')
-    print('Waiting for page to load...')
+    put_text('--------------------------------------------------------------------------------')
+    put_text('Waiting for page to load...')
 
     # This loop clicks "go", gathers the page source, and checks for any error message
     while True:
         try:
             driver.find_element_by_id('list-id-table')  # Look for the table schedule
             driver.find_element_by_class_name('ui-jqgrid-btable')
-            print('Gathering data...')
+            put_text('Gathering data...')
             # If the table schedule is found, save the page source as 'input_source' and close the webdriver
             # We are going to use BeautifulSoup for the rest as I like it better than Selenium
             # TODO: FIX THIS!!!! MOST IMPORTANT!!! RANDOM SLEEP ARE BAD!!!
             time.sleep(4)  # If I don't have it wait, it'll capture the page before it loads resulting in a broken table
             input_source = BeautifulSoup(driver.page_source, 'html.parser')
-            print('Closing webdriver...')
+            put_text('Closing webdriver...')
             driver.close()
             break
         except NoSuchElementException:
@@ -283,8 +285,8 @@ if choice == '1':  # If the user decides to extract the schedule information fro
             # click go after checking there are no error messages (which there will not be the first time).
             try:
                 if driver.find_element_by_id('startpage-msgs').text != '':
-                    # Look for non-blank error message, if found, print the error message to the user and exit
-                    print(driver.find_element_by_id('startpage-msgs').text.replace('\n', ' '))
+                    # Look for non-blank error message, if found, put_text the error message to the user and exit
+                    put_text(driver.find_element_by_id('startpage-msgs').text.replace('\n', ' '))
                     driver.close()
                     sys.exit()
                 # Click the 'go' button if there's no error message
@@ -310,17 +312,17 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     elif quarter == 'summer2':
         quarter = 5
     else:
-        print('That is not a valid option.\nExiting...')
+        put_text('That is not a valid option.\nExiting...')
         sys.exit()
 
 
 elif choice == '2':  # If the user decides to extract the schedule information from a file:
-    print('Extracting from a file:')
-    print('--------------------------------------------------------------------------------')
-    print('Go to https://act.ucsd.edu/webreg2/start, sign in, make sure your')
-    print('schedule is shown on the page. Right click, \'Save Page As\', and save')
-    print('the file.')
-    print('--------------------------------------------------------------------------------')
+    put_text('Extracting from a file:')
+    put_text('--------------------------------------------------------------------------------')
+    put_text('Go to https://act.ucsd.edu/webreg2/start, sign in, make sure your')
+    put_text('schedule is shown on the page. Right click, \'Save Page As\', and save')
+    put_text('the file.')
+    put_text('--------------------------------------------------------------------------------')
     filename = input('Please type the path to the file location:\n')
 
     # If the user doesn't specify a filename, resort to the example_input.html file provided
@@ -331,7 +333,7 @@ elif choice == '2':  # If the user decides to extract the schedule information f
     if '.' not in filename:
         filename = filename + '.html'
 
-    print('--------------------------------------------------------------------------------')
+    put_text('--------------------------------------------------------------------------------')
 
     # We need to manually ask the user for the quarter and year of their schedule
     try:
@@ -339,11 +341,11 @@ elif choice == '2':  # If the user decides to extract the schedule information f
                             'Summer Session 1\n[5] Summer Session 2\n'))
         if quarter - 1 not in range(5):
             raise ValueError
-        print('--------------------------------------------------------------------------------')
+        put_text('--------------------------------------------------------------------------------')
         year = int(input('What year is the selected schedule from?\n'))
-        print('--------------------------------------------------------------------------------')
+        put_text('--------------------------------------------------------------------------------')
     except ValueError:  # If the input is not an integer 1-5, then exit
-        print('Invalid input.\nExiting...')
+        put_text('Invalid input.\nExiting...')
         sys.exit()
 
     # Grab the source from the file
@@ -353,11 +355,11 @@ elif choice == '2':  # If the user decides to extract the schedule information f
         input_source = BeautifulSoup(f1.read(), 'html.parser')  # Create a BeautifulSoup html object from the file
         f1.close()  # Close the file
     except FileNotFoundError:  # If an invalid file is given, then exit
-        print('File not found.\nExiting...')
+        put_text('File not found.\nExiting...')
         sys.exit()
 
 else:  # If the user doesn't input 1 or 2 (WebReg or file), then exit
-    print('Invalid input.\nExiting...')
+    put_text('Invalid input.\nExiting...')
     sys.exit()
 
 # Next we need to download the academic calendar from UCSD's official website in order to get important dates from it.
@@ -380,11 +382,11 @@ elif quarter == 4:
 elif quarter == 5:
     years = str(int(year - 1)) + '-' + str(year)
 else:  # If somehow 'quarter' is not an integer 1-5, then exit, although I believe that the script would exit sooner.
-    print('Invalid input.\nExiting...')
+    put_text('Invalid input.\nExiting...')
     sys.exit()
 
 # Gets the chosen academic calendar and saves it to a file
-print('Downloading UCSD ' + years + ' Academic Calendar')
+put_text('Downloading UCSD ' + years + ' Academic Calendar')
 r = requests.get('https://blink.ucsd.edu/_files/SCI-tab/' + years + '-academic-calendar.ics')
 with open(years + '-academic-calendar.ics', 'wb+') as f2:
     f2.write(r.content)
@@ -400,7 +402,7 @@ os.remove(years + '-academic-calendar.ics')
 # If the selected calendar file does not exist, instead of getting an .ics file we'll get an html file of UCSD's
 # website saying "this page does not exist". In that case, the user chose a year for which a calendar doesn't exist.
 if '<!DOCTYPE html>' in academic_calendar:
-    print('Too far in the future or too far in the past.\nExiting...')
+    put_text('Too far in the future or too far in the past.\nExiting...')
     sys.exit()
 
 # Removes ICS header information from academic_calendar, as well as adds a newline before every event for readability's
@@ -493,7 +495,7 @@ while True:
         # If i == -1 then there are no more lines that start with "SUMMARY:", meaning, we've reached the end, break.
         break
 
-print('Parsing data...')
+put_text('Parsing data...')
 
 # Initializing some variables used for later:
 # Narrows down the html input to just the table of interest
@@ -607,7 +609,7 @@ while i < number_of_rows:
 # ---------------------------------------------------------------------------------------------------------
 # BEGIN DISGUSTING SECTION, PREPARE FOR MAXIMUM SPAGHETTI
 
-print('Searching for duplicate events...')
+put_text('Searching for duplicate events...')
 
 # Stores a list of lists with [class, type, days] for each recurring event
 meeting_names = []
@@ -618,7 +620,7 @@ for i in recurring_events:
 duplicates = []
 for i in meeting_names:
     if meeting_names.count(i) > 1 and i not in duplicates:
-        print(i)
+        put_text(i)
         duplicates.append(i)
 
 # For every recurring event list in duplicates, add the times of all the events that mach that event to the event list
@@ -629,22 +631,22 @@ for i in range(len(recurring_events)):
             j.append(recurring_events[i].time)
 
 if len(duplicates) == 0:  # If we've reached this points and duplicates is empty, then there are no duplicates (duh)
-    print('None found.')
+    put_text('None found.')
 else:  # If duplicate events are found,
-    print('--------------------------------------------------------------------------------')
+    put_text('--------------------------------------------------------------------------------')
     for i in duplicates:  # For every list in duplicates,
-        print('Duplicate events found, which one would you like to keep:')
+        put_text('Duplicate events found, which one would you like to keep:')
         k = 1
-        for j in range(3, len(i)):  # Print each event with its times
-            print('(' + str(k) + ') ' + i[0] + ' ' + i[1] + ' on ' + i[2] + ' at ' + i[j])
+        for j in range(3, len(i)):  # put_text each event with its times
+            put_text('(' + str(k) + ') ' + i[0] + ' ' + i[1] + ' on ' + i[2] + ' at ' + i[j])
             k += 1
-        print('(' + str(k) + ') Keep All')
-        print('(' + str(k + 1) + ') Keep None')
+        put_text('(' + str(k) + ') Keep All')
+        put_text('(' + str(k + 1) + ') Keep None')
 
         try:  # Get input, make sure it's gucci
             keep = int(input('').replace(' ', ''))
         except ValueError:
-            print('Invalid input.\nExiting...')
+            put_text('Invalid input.\nExiting...')
             sys.exit()
 
         #  Now decide what to do based on the number the user selected
@@ -659,7 +661,7 @@ else:  # If duplicate events are found,
         elif keep == k:  # Mark nothing for removal
             pass
         elif keep <= 0 or keep >= k + 2:  # Invalid input
-            print('Invalid input.\nExiting...')
+            put_text('Invalid input.\nExiting...')
             sys.exit()
         else:  # Mark everything but the selected one for removal
             for x in range(len(recurring_events)):
@@ -672,7 +674,7 @@ else:  # If duplicate events are found,
                                                     and i[keep + 2] == recurring_events[x].time:
                     removals.remove(x)
                     break
-        print('--------------------------------------------------------------------------------')
+        put_text('--------------------------------------------------------------------------------')
         #  Actually removes items marked for removal
         for index in sorted(removals, reverse=True):
             del recurring_events[index]
@@ -686,7 +688,7 @@ for i in recurring_events:
 for i in one_time_events:
     i.time = i.time.replace('a', '').replace(':', '')
 
-print('Creating \'Calendar.ics\'...')
+put_text('Creating \'Calendar.ics\'...')
 
 # TODO: Let the user choose where they want to save the file
 # Now we create the actual Calendar.ics file, finally.
@@ -866,7 +868,7 @@ for i in one_time_events:
     f3.write('STATUS:CONFIRMED\n')  # I don't know if this is necessary, but I'm adding it just in case
     f3.write('END:VEVENT\n')  # Let's the calendar program that we're done with this event
 
-print('--------------------------------------------------------------------------------')
+put_text('--------------------------------------------------------------------------------')
 try:
     # Ask the user if they want to add the events from the academic calendar to the calendar upload.
     include_academic_calendar = input('Do you want to include the academic calendar events in the calendar file? If\n'
@@ -879,18 +881,18 @@ try:
         f3.close()  # Close the file, we're done!
     else:
         raise ValueError
-    print('--------------------------------------------------------------------------------')
+    put_text('--------------------------------------------------------------------------------')
 except ValueError:  # If the user inputs something other than nothing, 'y', 'yes', 'n', or 'no', then exit
-    print('Invalid input.\nExiting...')
+    put_text('Invalid input.\nExiting...')
     f3.close()
     sys.exit()
 
 
 # Tell the user the unique events we created:
-print(str(len(recurring_events) + len(one_time_events)) + ' Unique Calendar Events Created:')
-print('--------------------------------------------------------------------------------')
+put_text(str(len(recurring_events) + len(one_time_events)) + ' Unique Calendar Events Created:')
+put_text('--------------------------------------------------------------------------------')
 for i in recurring_events:
-    print('Recurring Event:........' + i.code + ' ' + i.type + ' on ' + i.days)
+    put_text('Recurring Event:........' + i.code + ' ' + i.type + ' on ' + i.days)
 for i in one_time_events:
-    print('One-Time Event:.........' + i.code + ' ' + i.type + ' on ' + i.date[:6] + str(year))
-print('--------------------------------------------------------------------------------')
+    put_text('One-Time Event:.........' + i.code + ' ' + i.type + ' on ' + i.date[:6] + str(year))
+put_text('--------------------------------------------------------------------------------')
