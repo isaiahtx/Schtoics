@@ -1,3 +1,5 @@
+from asyncio import subprocess
+from distutils.log import warn
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.firefox.options import Options
@@ -10,9 +12,9 @@ from bs4 import BeautifulSoup
 import datetime
 import sys
 import os
+import subprocess
 import requests
 import time
-
 
 # Defines a function to clear the console based on the OS being used
 def clear():
@@ -54,6 +56,19 @@ class Recurring:
         self.bldg = building
         self.room = _room
 
+    def __str__(self):
+        s = ''
+        s += 'code: ' + str(self.code) + '\n'
+        s += 'name: ' + str(self.name) + '\n'
+        s += 'type: ' + str(self.type) + '\n'
+        s += 'sect: ' + str(self.sect) + '\n'
+        s += 'prof: ' + str(self.prof) + '\n'
+        s += 'days: ' + str(self.days) + '\n'
+        s += 'time: ' + str(self.time) + '\n'
+        s += 'bldg: ' + str(self.bldg) + '\n'
+        s += 'room: ' + str(self.room) + '\n'
+
+        return s
 
 # This class is used to store the identifying information for any one-time event
 class OneTime:
@@ -67,6 +82,18 @@ class OneTime:
         self.room = _room
         self.type = _type
 
+    def __str__(self):
+        s = ''
+        s += 'code: ' + str(self.code) + '\n'
+        s += 'name: ' + str(self.name) + '\n'
+        s += 'type: ' + str(self.type) + '\n'
+        s += 'prof: ' + str(self.prof) + '\n'
+        s += 'date: ' + str(self.date) + '\n'
+        s += 'time: ' + str(self.time) + '\n'
+        s += 'bldg: ' + str(self.bldg) + '\n'
+        s += 'room: ' + str(self.room) + '\n'
+
+        return s
 
 # Asks the user if they want to get the information from a file or from a website
 clear()
@@ -104,6 +131,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     options.headless = True
 
     # Initialize the webdriver using Firefox and the earlier outlined options
+
     driver = webdriver.Firefox(options=options)
 
     # Navigates to WebReg
@@ -198,7 +226,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
         # If there is no message, it's in the process of being changed, keep checking for success
         except (StaleElementReferenceException, NoSuchElementException):
             pass
-        except WebDriverException:  # This is weird, but if we get a WebDriver error, that means the sign in work.
+        except WebDriverException:  # This is weird, but if we get a WebDriver error, that means the sign in was successful.
             print("Success! Logging you in...")
             break
         except SystemExit:
@@ -320,16 +348,14 @@ elif choice == '2':  # If the user decides to extract the schedule information f
     print('Go to https://act.ucsd.edu/webreg2/start, sign in, make sure your')
     print('schedule is shown on the page. Right click, \'Save Page As\', and save')
     print('the file.')
+    print()
+    print('WARNING: This method may have some issues. If the file option doesn\'t')
+    print('work for you, log into WebReg, inspect element, and copy all of the HTML')
+    print('code for the table containing the schedule information at the bottom, paste')
+    print('it into an empty text file, and provide the location of that file to this')
+    print('script.')
     print('--------------------------------------------------------------------------------')
     filename = input('Please type the path to the file location:\n')
-
-    # If the user doesn't specify a filename, resort to the example_input.html file provided
-    if filename == '':
-        filename = 'test'
-
-    # If the user doesn't specify a file extension, add '.html' to the end of the filename
-    if '.' not in filename:
-        filename = filename + '.html'
 
     print('--------------------------------------------------------------------------------')
 
@@ -425,73 +451,66 @@ quarter_starts = None
 quarter_ends = None
 holidays = []
 
-# This loop looks for any event in academic_calendar that has 'begin' and 'struction' (from 'instruction') in it, finds
-# the date of that event, checks to make sure that it is the same number event as quarter. To explain what that means,
-# if quarter = 4, meaning Summer Session I, then we want the 4th event that includes 'begin' and 'struction' in
-# academic calendar.
-# This loop assumes that the events in the .ics file are in order, which they always have been and should always be.
-i = academic_calendar.find('SUMMARY:')
-j = 1
-while True:
-    if i != -1:
-        if ('begin' in academic_calendar[i + 8:academic_calendar.find('\n', i)]) \
-                and ('struction' in academic_calendar[i + 8:academic_calendar.find('\n', i)]):
-            # If 'begin', 'struction', both in the selected event summary, check to make sure it's start date of the
-            # selected quarter
-            if j == quarter:
-                # If we found the desired quarter start date, save it, leave the loop and continue on
-                quarter_starts = datetime.date(int(academic_calendar[i - 9:i - 5]),  # year
-                                               int(academic_calendar[i - 5:i - 3]),  # month
-                                               int(academic_calendar[i - 3:i - 1]))  # day
-                break
-            j += 1
-        i = academic_calendar.find('SUMMARY:', i + 8)
-    else:
-        # If i == -1 then there are no more lines that start with "SUMMARY:", meaning, we've reached the end, break.
-        break
+class CalEvent:
+    def __init__(self,summary,start,end):
+        self.summary = summary
+        self.start = start
+        self.end = end
 
-# Does the same as the above loop but looks for 'end' instead of 'begin' and saves to quarter_ends
-i = academic_calendar.find('SUMMARY:')
-j = 1
-while True:
-    if i != -1:
-        if ('end' in academic_calendar[i + 8:academic_calendar.find('\n', i)]) \
-                and ('struction' in academic_calendar[i + 8:academic_calendar.find('\n', i)]):
-            if j == quarter:
-                quarter_ends = datetime.date(int(academic_calendar[i - 9:i - 5]),  # year
-                                             int(academic_calendar[i - 5:i - 3]),  # month
-                                             int(academic_calendar[i - 3:i - 1]))  # day
-                break
-            j += 1
-        i = academic_calendar.find('SUMMARY:', i + 8)
-    else:
-        break
+cal_events = []
 
-# Looks for any event with 'day' in the summary, checks to see if said event is within the quarter start-end date
-# range, and adds a datetime.date object to holidays. I checked all the calendars can see, without fail, as far as I
-# could tell, any event with the word 'day' in it was a holiday.
-i = academic_calendar.find('SUMMARY:')
+# Record all of the events in the academic calendar
+i = 0
+j = 0
 while True:
-    if i != -1:
-        if 'day' in academic_calendar[i + 8:academic_calendar.find('\n', i)].lower():
-            # If we find 'day' in the event summary, then check to make sure that said day is actually in the quarter
-            # of interest.
-            holiday_start_date = datetime.date(int(academic_calendar[i - 9:i - 5]),  # year
-                                               int(academic_calendar[i - 5:i - 3]),  # month
-                                               int(academic_calendar[i - 3:i - 1]))  # day
-            holiday_end_date = datetime.date(int(academic_calendar[i - 37:i - 33]),  # year
-                                             int(academic_calendar[i - 33:i - 31]),  # month
-                                             int(academic_calendar[i - 31:i - 29]))  # day
-            for j in range((holiday_end_date - holiday_start_date).days):
-                # For multi-day holidays, we need to add an individual holiday date object for every day within that
-                # holiday.
-                if quarter_starts <= holiday_start_date + datetime.timedelta(days=j) <= quarter_ends:
-                    # If the holiday resides within the quarter of interest, add it to holidays list
-                    holidays.append(holiday_start_date + datetime.timedelta(days=j))
-        i = academic_calendar.find('SUMMARY:', i + 8)
+    if i == 0:
+        i = academic_calendar.find('BEGIN:VEVENT',i)
     else:
-        # If i == -1 then there are no more lines that start with "SUMMARY:", meaning, we've reached the end, break.
+        i = academic_calendar.find('BEGIN:VEVENT',i+len('BEGIN:VEVENT'))
+
+    j = academic_calendar.find('END:VEVENT',j) + len('END:VEVENT')
+    if i == -1:
         break
+    event_lines = academic_calendar[i:j]
+    event_lines = event_lines.split('\n')
+    event = CalEvent(None,None,None)
+    for line in event_lines:
+        k = line.find(':')
+        if line.startswith('SUMMARY'):
+            event.summary = line[k+1:]
+        elif line.startswith('DTSTART'):
+            event.start = datetime.date(int(line[k+1:k+5]),int(line[k+5:k+7]),int(line[k+7:k+9]))
+        elif line.startswith('DTEND'):
+            event.end = datetime.date(int(line[k+1:k+5]),int(line[k+5:k+7]),int(line[k+7:k+9]))
+    cal_events.append(event)
+
+# Find the quarter instruction start date
+i = 0
+for event in cal_events:
+    summary = event.summary
+    if ('begin' in summary) and ('struction' in summary):
+        i += 1
+        if i == quarter:
+            quarter_starts = event.start
+            break
+
+# Find quarter instruction end date
+i = 0
+for event in cal_events:
+    summary = event.summary
+    if ('end' in summary) and ('struction' in summary):
+        i += 1
+        if i == quarter:
+            quarter_ends = event.start
+            break
+
+# Get all of the holidays (i.e., events that contain the word `day')
+for event in cal_events:
+    if 'day' in event.summary.lower():
+        for j in range((event.end - event.start).days):
+            if quarter_starts <= event.start + datetime.timedelta(days=j) <= quarter_ends:
+                holidays.append(event.start + datetime.timedelta(days=j))
+                print(event.start + datetime.timedelta(days=j))
 
 print('Parsing data...')
 
@@ -702,6 +721,13 @@ f3.write(
 
 # This loop goes through every Recurring event object and adds a calendar event to the Calendar.ics file
 for i in recurring_events:
+
+    # If the meeting time has not yet been decided, ignore
+    if i.days == 'TB':
+        print("WARNING: The event " + i.code + " has been ignored due to not having\nan assigned meeting time.")
+        recurring_events.remove(i)
+        continue
+    #print(i)
     f3.write('\nBEGIN:VEVENT\n')  # Initialize the calendar event
 
     # Currently, each event's time attribute is a string which looks like '1100-300p', '830-1230p'. Notice there is no
@@ -808,6 +834,7 @@ for i in recurring_events:
 
 # Basically the same thing as the above loop, but for OneTime event objects instead of Recurring event objects.
 for i in one_time_events:
+    #print(i)
     f3.write('\nBEGIN:VEVENT\n')  # Initialize the calendar event
 
     # See code block in previous for-loop
@@ -888,9 +915,8 @@ except ValueError:  # If the user inputs something other than nothing, 'y', 'yes
 
 # Tell the user the unique events we created:
 print(str(len(recurring_events) + len(one_time_events)) + ' Unique Calendar Events Created:')
-print('--------------------------------------------------------------------------------')
 for i in recurring_events:
-    print('Recurring Event:........' + i.code + ' ' + i.type + ' on ' + i.days)
+    print('\tRecurring Event:........' + i.code + ' ' + i.type + ' on ' + i.days)
 for i in one_time_events:
-    print('One-Time Event:.........' + i.code + ' ' + i.type + ' on ' + i.date[:6] + str(year))
+    print('\tOne-Time Event:.........' + i.code + ' ' + i.type + ' on ' + i.date[:6] + str(year))
 print('--------------------------------------------------------------------------------')

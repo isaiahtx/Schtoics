@@ -1,9 +1,13 @@
 # Schtoics
 Pronounced "Skuh-tow-icks", Schtoics is a tool that converts a UCSD WebReg schedule and the official UCSD Academic Calendar to a .ICS file that can be used in Google Calendar.
 
-This script *should* work indefinitely, provided UCSD does not change WebReg or the [academic calendar page](https://blink.ucsd.edu/instructors/resources/academic/calendars/2020.html) in any major ways. It was last checked and was working for the Winter 2022 Quarter on 12/6/2021.
+This script *should* work indefinitely, provided UCSD does not change WebReg or the [academic calendar page](https://blink.ucsd.edu/instructors/resources/academic/calendars/2020.html) in any major ways. It was last checked and was working for the Spring 2022 Quarter on 04/05/2022.
 
 This was a project done for fun on my own time, I do not make any guarantees about its functionality.
+
+## WARNING:
+
+The current Windows executable listed in releases does not work and is broken.
 
 # Usage
 
@@ -11,9 +15,14 @@ There are two options, you can have the script either sign into WebReg for you a
 
 # How to Run
 
-* **Windows**: Simply download and run the Schtoics.exe file found in [releases](https://github.com/isaiahtx/Schtoics/releases), make sure to have Firefox installed
+ - Download [python](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/stable/installation/) for your platform.
+ - Download [Firefox](https://www.mozilla.org/en-US/firefox/new/) for your platform.
+ - Download [main.py](https://github.com/isaiahtx/Schtoics/blob/master/main.py) and [requirements.txt](https://github.com/isaiahtx/Schtoics/blob/master/requirements.txt) file and place them in the same directory.
+ - Download the latest version of [geckodriver](https://github.com/mozilla/geckodriver/releases) for your platform and place the executable in the same directory as main.py.
+ - Open a terminal and navigate to the directory where you placed main.py and requirements.txt; run `pip install -r requirements.txt`
+ - Run `python main.py` and follow the instructions.
 
-* **macOS/Linux**: Compile it on your own, sorry :(
+I am currently working on creating an executable that comes bundled with geckodriver that can simply be clicked.
 
 # Adding to Google Calendar
 * Go to [calendar.google.com](https://calendar.google.com/)
