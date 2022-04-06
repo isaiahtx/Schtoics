@@ -1,4 +1,3 @@
-from asyncio import subprocess
 from distutils.log import warn
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
@@ -12,7 +11,6 @@ from bs4 import BeautifulSoup
 import datetime
 import sys
 import os
-import subprocess
 import requests
 import time
 
