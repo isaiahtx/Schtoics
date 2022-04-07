@@ -18,7 +18,7 @@ There are two options, you can have the script either sign into WebReg for you a
  - Download [python](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/stable/installation/) for your platform.
  - Download [Firefox](https://www.mozilla.org/en-US/firefox/new/) for your platform.
  - Download the [main.py](https://github.com/isaiahtx/Schtoics/blob/master/main.py) and [requirements.txt](https://github.com/isaiahtx/Schtoics/blob/master/requirements.txt) files and place them in the same directory.
- - Download the latest version of [geckodriver](https://github.com/mozilla/geckodriver/releases) for your platform and place the executable in the same directory as main.py.
+ - Download the latest version of [geckodriver](https://github.com/mozilla/geckodriver/releases) for your platform and add the executable to your PATH.
  - Open a terminal and navigate to the directory where you placed main.py and requirements.txt; run `pip install -r requirements.txt`
  - Run `python main.py` and follow the instructions.
 
