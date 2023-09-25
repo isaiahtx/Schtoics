@@ -12,7 +12,7 @@ There are two options, you can have the script either sign into WebReg for you a
 
 # How to Run
 
- - Download [python](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/stable/installation/) for your platform.
+ - Download [python](https://www.python.org/downloads/) for your platform (last checked with Python 3.11)
  - Download [Firefox](https://www.mozilla.org/en-US/firefox/new/) for your platform.
  - Download the [main.py](https://github.com/isaiahtx/Schtoics/blob/master/main.py) and [requirements.txt](https://github.com/isaiahtx/Schtoics/blob/master/requirements.txt) files and place them in the same directory.
  - Open a terminal and navigate to the directory where you placed main.py and create a python environment by running `python -m venv .`
