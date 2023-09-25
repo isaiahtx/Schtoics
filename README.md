@@ -6,9 +6,20 @@ This script *should* work indefinitely, provided UCSD does not change WebReg or 
 
 This was a project done for fun on my own time, I do not make any guarantees about its functionality.
 
+# Features
+ - Supports every kind of class type, e.g. seminars, labs, exam-only classes, summer classes, etc.
+ - Automatically scrapes information from the official UCSD calendar in order to determine correct start and end dates for fall, winter, spring quarters and both summer sessions.
+ - Adds holes in schedule for holidays.
+ - Handles classes with multiple time-slots for an exam/discussion which make you pick one by allowing you to add either all of the options or just one to your calendar.
+ - More generally, warns you if theres duplicate entries and allows you to choose which ones to keep.
+ - Allows you to choose whether or not you’d like to combine the official UCSD calendar with your schedule calendar (useful if you use the program for different quarters in the same schoolyear).
+ - Includes planned/waitlisted classes from your schedule.
+
+**If you find out that your schedule doesn't work with Schtoics, send me the .html file with your class list information at isaiah@ucsd.edu and I'll make it work.**
+
 # Usage
 
-There are two options, you can have the script either sign into WebReg for you and scrape the required information, or you can provide the program with an html copy of your WebReg page or just the table with your schedule on it. When providing the script with a copy of your WebReg page, make sure the file is located in the same directory as the script, and make sure the table is actually included in the file (double check by opening the .html file and look for the table there). If you do not see the table after saving the page, inspect element and copy and paste the html code for the table into a file and put it in the same document (make sure it has some sort of extension, if there is none, the script will assume you left out .html).
+There are two options, you can have the script either sign into WebReg for you and scrape the required information, or you can provide the program with an html copy of your WebReg page or just the table with your schedule on it. When providing the script with a copy of your WebReg page, make sure the file is located in the same directory as the script, and make sure the table is actually included in the file (double check by opening the .html file and look for the table there). If you do not see the table after saving the page, inspect element and copy and paste the html code for just the table into a file and put it in the same document (make sure it has some sort of extension, if there is none, the script will assume you left out .html).
 
 # How to Run
 
