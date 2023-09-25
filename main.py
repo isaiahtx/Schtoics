@@ -346,7 +346,7 @@ elif choice == '2':  # If the user decides to extract the schedule information f
     try:
         quarter = int(input('What quarter is the selected schedule from?\n[1] Fall\n[2] Winter\n[3] Spring\n[4] '
                             'Summer Session 1\n[5] Summer Session 2\n'))
-        if quarter not in ['fall','winter','spring','summer1','summer2']:
+        if quarter not in [1,2,3,4,5]:
             raise ValueError
         print('--------------------------------------------------------------------------------')
         year = int(input('What year is the selected schedule from?\n'))
@@ -354,6 +354,17 @@ elif choice == '2':  # If the user decides to extract the schedule information f
     except ValueError:  # If the input is not an integer 1-5, then exit
         print('Invalid input.\nExiting...')
         sys.exit()
+
+    if quarter == 1:
+        quarter = 'fall'
+    elif quarter == 2:
+        quarter = 'winter'
+    elif quarter == 3:
+        quarter = 'spring'
+    elif quarter == 4:
+        quarter = 'summer1'
+    elif quarter == 5:
+        quarter = 'summer2'
 
     # Grab the source from the file
     # We are going to use BeautifulSoup for the rest as I like it better than Selenium
