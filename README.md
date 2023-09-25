@@ -19,9 +19,9 @@ There are two options, you can have the script either sign into WebReg for you a
  - Download [python](https://www.python.org/downloads/) and [pip](https://pip.pypa.io/en/stable/installation/) for your platform.
  - Download [Firefox](https://www.mozilla.org/en-US/firefox/new/) for your platform.
  - Download the [main.py](https://github.com/isaiahtx/Schtoics/blob/master/main.py) and [requirements.txt](https://github.com/isaiahtx/Schtoics/blob/master/requirements.txt) files and place them in the same directory.
- - Download the latest version of [geckodriver](https://github.com/mozilla/geckodriver/releases) for your platform and add the executable to your PATH.
- - Open a terminal and navigate to the directory where you placed main.py and requirements.txt; run `pip install -r requirements.txt`
- - Run `python main.py` and follow the instructions.
+ - Open a terminal and navigate to the directory where you placed main.py and create a python environment by running `python -m venv .`
+ - Install the additional required packages by running `./bin/pip install -r requirements.txt`
+ - Run `/bin/python main.py` and follow the instructions.
 
 I am currently working on creating an executable that comes bundled with geckodriver that can simply be clicked.
 
@@ -34,6 +34,8 @@ I am currently working on creating an executable that comes bundled with geckodr
 * Choose "Select file from your computer" and navigate to the Calendar.ics file (should be located in the same directory as the script)
 * Choose the calendar you created from the dropdown
 * Click import
+
+**IT IS VERY IMPORTANT THAT YOU MAKE A NEW CALENDAR FOR THIS FILE, AS MY PROGRAM IS NOT PERFECT AND CAN SOMETIMES BREAK**
 
 If you have problems you can try using an incognito window or use another browser (Firefox seems to work best).
 
