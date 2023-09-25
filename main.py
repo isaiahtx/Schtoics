@@ -416,11 +416,10 @@ if '<!DOCTYPE html>' in academic_calendar:
 # sake.
 academic_calendar = academic_calendar[academic_calendar.find('BEGIN:VEVENT'):].replace('BEGIN:VEVENT', '\nBEGIN:VEVENT')
 
-# Remove all the unnecessary lines from academic_calendar
+# Remove some unnecessary lines from academic_calendar
 academic_calendar = remove_line(academic_calendar, 'LAST-MODIFIED:')
 academic_calendar = remove_line(academic_calendar, 'PRIORITY:')
 academic_calendar = remove_line(academic_calendar, 'SEQUENCE:')
-academic_calendar = remove_line(academic_calendar, 'UID:')
 academic_calendar = remove_line(academic_calendar, 'X-MICROSOFT-CDO-BUSYSTATUS:')
 academic_calendar = remove_line(academic_calendar, 'X-MICROSOFT-CDO-IMPORTANCE')
 academic_calendar = remove_line(academic_calendar, 'X-MS-OLK-AUTOFILLLOCATION:')
@@ -483,9 +482,10 @@ for event in cal_events:
         quarter_ends = event.start
         break
 
-# Get all of the holidays (i.e., events that contain the word `day')
+# Get all of the holidays (i.e., events that contain the word `day' but aren't `fifteenth day of the quarter`)
 for event in cal_events:
-    if 'day' in event.summary.lower():
+    summary = event.summary.lower()
+    if ('day' in summary) and ('fift' not in summary):
         for j in range((event.end - event.start).days):
             if quarter_starts <= event.start + datetime.timedelta(days=j) <= quarter_ends:
                 holidays.append(event.start + datetime.timedelta(days=j))
