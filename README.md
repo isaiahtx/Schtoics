@@ -1,12 +1,8 @@
 
-# UPDATE: THIS PROJECT IS OFFICIALLY NO LONGER WORKING AS OF 9/24/2023
-
-Due to changes in selenium, this project no longer works with the newest and latest versions of python. In the meantime, I recommend the useful [calendarize-webreg](https://github.com/AdoryVo/calendarize-webreg) by Adory Vo (although sadly it has many less features, for example, it is not integrated with the official UCSD calendar and it breaks for unusual types of classes, like seminars).
-
 # Schtoics
 Pronounced "Skuh-tow-icks", Schtoics is a tool that converts a UCSD WebReg schedule and the official UCSD Academic Calendar to a .ICS file that can be used in Google Calendar.
 
-This script *should* work indefinitely, provided UCSD does not change WebReg or the [academic calendar page](https://blink.ucsd.edu/instructors/resources/academic/calendars/2020.html) in any major ways. **It was last checked and was working for the Winter 2023 Quarter on 01/31/2023.**
+This script *should* work indefinitely, provided UCSD does not change WebReg or the [academic calendar page](https://blink.ucsd.edu/instructors/resources/academic/calendars/2020.html) in any major ways. **It was last checked and was working for the Fall 2023 Quarter on 09/24/2023.**
 
 This was a project done for fun on my own time, I do not make any guarantees about its functionality.
 
