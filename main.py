@@ -1,6 +1,7 @@
 from distutils.log import warn
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.by import By
 from selenium.webdriver.firefox.options import Options
 from selenium.common.exceptions import NoSuchElementException, \
                                        ElementNotInteractableException, \
@@ -126,7 +127,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
 
     # Initializes the scraper as headless
     options = Options()
-    options.headless = True
+    options.add_argument("--headless")
 
     # Initialize the webdriver using Firefox and the earlier outlined options
 
@@ -138,10 +139,10 @@ if choice == '1':  # If the user decides to extract the schedule information fro
 
     # Enters the username and password in their respective fields
     print('Entering username and password...')
-    elem = driver.find_element_by_name('urn:mace:ucsd.edu:sso:username')
+    elem = driver.find_element('name', 'urn:mace:ucsd.edu:sso:username')
     elem.clear()
     elem.send_keys(user)
-    elem = driver.find_element_by_name('urn:mace:ucsd.edu:sso:password')
+    elem = driver.find_element('name', 'urn:mace:ucsd.edu:sso:password')
     elem.clear()
     elem.send_keys(password)
     elem.send_keys(Keys.RETURN)
@@ -156,7 +157,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
             break  # If it is there, then break the loop, continue on
         except AssertionError:  # If 'UCSD SSO' is not in the title, check to see if the password is wrong
             try:
-                driver.find_element_by_id('_login_error_message')  # Look for an error message
+                driver.find_element('id', '_login_error_message')  # Look for an error message
                 print('Password and username incorrect.\nExiting...')
                 driver.close()
                 sys.exit()  # If the error message is found exit the program
@@ -170,10 +171,10 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     while True:
         try:
             driver.switch_to.default_content()  # Switch scope back to the main page
-            driver.switch_to.frame(driver.find_element_by_id('duo_iframe'))  # Switch to Duo iframe where the button is
-            driver.find_element_by_css_selector('button.auth-button.positive').click()  # Click the auth button
+            driver.switch_to.frame(driver.find_element('id', 'duo_iframe'))  # Switch to Duo iframe where the button is
+            driver.find_element(By.CSS_SELECTOR, 'button.auth-button.positive').click()  # Click the auth button
             # Look for the 'cancel request' button, which only comes up when the 2FA request button has been clicked
-            driver.find_element_by_css_selector('button.btn-cancel')
+            driver.find_element(By.CSS_SELECTOR, 'button.btn-cancel')
             break
         except (ElementNotInteractableException, NoSuchElementException):
             pass  # If any of the above steps fail, run through the whole thing repeatedly until it works
@@ -182,20 +183,20 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     while True:
         try:
             # Check to make sure that the 2FA request was sent
-            if 'Pushed a login request' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
-                print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+            if 'Pushed a login request' in driver.find_element(By.XPATH, '//span[@class=\'message-text\']').text:
+                print(driver.find_element(By.XPATH, '//span[@class=\'message-text\']').text)
                 break
             else:  # If a message is given saying that something other than the request was sent, exit
                 sys.exit()
         except SystemExit:  # TODO: Fix this monstrosity below lol
-            if driver.find_element_by_xpath('//span[@class=\'message-text\']').text == '':
+            if driver.find_element(By.XPATH, '//span[@class=\'message-text\']').text == '':
                 pass
             else:
-                if 'Pushed a login request' in driver.find_element_by_xpath('//span[@class=\'message-text\']').text:
-                    print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+                if 'Pushed a login request' in driver.find_element(By.XPATH, '//span[@class=\'message-text\']').text:
+                    print(driver.find_element(By.XPATH, '//span[@class=\'message-text\']').text)
                     break
                 else:
-                    print(driver.find_element_by_xpath('//span[@class=\'message-text\']').text)
+                    print(driver.find_element(By.XPATH, '//span[@class=\'message-text\']').text)
                     print('If you see a blank line above, there was an error with the script. Try running it again')
                     print('\nExiting...')
                     driver.close()
@@ -207,15 +208,15 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     while True:
         try:
             # If we get a success message, continue on!
-            if 'Success' in driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text:
-                print(driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text)
+            if 'Success' in driver.find_element(By.XPATH, '/html/body/div/div/div[4]/div/div/div/span').text:
+                print(driver.find_element(By.XPATH, '/html/body/div/div/div[4]/div/div/div/span').text)
                 break
             # If the message still says 'Pushed a login request...' then we're still waiting on the user, try again
-            elif 'Pushed a login request' in driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text:
+            elif 'Pushed a login request' in driver.find_element(By.XPATH, '/html/body/div/div/div[4]/div/div/div/span').text:
                 pass
             # If the message says it's denied, exit
-            elif 'denied' in driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text:
-                print('Error: ' + driver.find_element_by_xpath('/html/body/div/div/div[4]/div/div/div/span').text)
+            elif 'denied' in driver.find_element(By.XPATH, '/html/body/div/div/div[4]/div/div/div/span').text:
+                print('Error: ' + driver.find_element(By.XPATH, '/html/body/div/div/div[4]/div/div/div/span').text)
                 driver.close()
                 sys.exit()
             # If none of the above work, it's still loading or being changed, try again
@@ -236,7 +237,7 @@ if choice == '1':  # If the user decides to extract the schedule information fro
         try:
             driver.switch_to.default_content()  # Make sure we're out of the Duo iframe
             # If we find the dropdown, continue on!
-            if driver.find_element_by_id('startpage-select-term').text != '':
+            if driver.find_element('id', 'startpage-select-term').text != '':
                 break
         # If the dropdown isn't found, it's still loading, try again
         except NoSuchElementException:
@@ -247,14 +248,14 @@ if choice == '1':  # If the user decides to extract the schedule information fro
 
     # Now we need to actually get all of the quarter options available, but only if they're fall, winter, spring, or a
     # regular summer session.
-    for i in driver.find_element_by_id('startpage-select-term').find_elements_by_tag_name('option'):
+    for i in driver.find_element('id', 'startpage-select-term').find_elements(By.TAG_NAME, 'option'):
         # More exclusions might need to be added beyond med school and special sessions
         if 'med' not in (i.text.lower()) and 'special' not in (i.text.lower()):
             dropdown_options.append(i)
 
     # We use Selenium's select class to actually be able to select the user's desired option before continuing to the
     # schedule.
-    select = Select(driver.find_element_by_id('startpage-select-term'))
+    select = Select(driver.find_element('id', 'startpage-select-term'))
 
     # Display the dropdown options to the user
     print('--------------------------------------------------------------------------------')
@@ -293,8 +294,8 @@ if choice == '1':  # If the user decides to extract the schedule information fro
     # This loop clicks "go", gathers the page source, and checks for any error message
     while True:
         try:
-            driver.find_element_by_id('list-id-table')  # Look for the table schedule
-            driver.find_element_by_class_name('ui-jqgrid-btable')
+            driver.find_element('id', 'list-id-table')  # Look for the table schedule
+            driver.find_element(By.CLASS_NAME, 'ui-jqgrid-btable')
             print('Gathering data...')
             # If the table schedule is found, save the page source as 'input_source' and close the webdriver
             # We are going to use BeautifulSoup for the rest as I like it better than Selenium
@@ -308,14 +309,14 @@ if choice == '1':  # If the user decides to extract the schedule information fro
             # If we can't find the table (which we won't the first time as we haven't clicked go yet), then find and
             # click go after checking there are no error messages (which there will not be the first time).
             try:
-                if driver.find_element_by_id('startpage-msgs').text != '':
+                if driver.find_element('id', 'startpage-msgs').text != '':
                     # Look for non-blank error message, if found, print the error message to the user and exit
-                    print(driver.find_element_by_id('startpage-msgs').text.replace('\n', ' '))
+                    print(driver.find_element('id', 'startpage-msgs').text.replace('\n', ' '))
                     driver.close()
                     sys.exit()
                 # Click the 'go' button if there's no error message
                 driver.switch_to.default_content()
-                driver.find_element_by_id('startpage-button-go').click()
+                driver.find_element('id', 'startpage-button-go').click()
             except (ElementNotInteractableException, NoSuchElementException):
                 # If we can't click or can't find the go button or the error message element, the page is still
                 # loading, try again.
@@ -323,22 +324,6 @@ if choice == '1':  # If the user decides to extract the schedule information fro
             except SystemExit:  # Exit if we find a non-blank error message
                 sys.exit()
             pass
-
-    # It should be obvious what this bit does, we need the quarters as integers for later logic
-    if quarter == 'fall':
-        quarter = 1
-    elif quarter == 'winter':
-        quarter = 2
-    elif quarter == 'spring':
-        quarter = 3
-    elif quarter == 'summer1':
-        quarter = 4
-    elif quarter == 'summer2':
-        quarter = 5
-    else:
-        print('That is not a valid option.\nExiting...')
-        sys.exit()
-
 
 elif choice == '2':  # If the user decides to extract the schedule information from a file:
     print('Extracting from a file:')
@@ -361,7 +346,7 @@ elif choice == '2':  # If the user decides to extract the schedule information f
     try:
         quarter = int(input('What quarter is the selected schedule from?\n[1] Fall\n[2] Winter\n[3] Spring\n[4] '
                             'Summer Session 1\n[5] Summer Session 2\n'))
-        if quarter - 1 not in range(5):
+        if quarter not in ['fall','winter','spring','summer1','summer2']:
             raise ValueError
         print('--------------------------------------------------------------------------------')
         year = int(input('What year is the selected schedule from?\n'))
@@ -387,23 +372,23 @@ else:  # If the user doesn't input 1 or 2 (WebReg or file), then exit
 # Next we need to download the academic calendar from UCSD's official website in order to get important dates from it.
 # UCSD typically has them available for download at https://blink.ucsd.edu/_files/SCI-tab/<years>-academic-calendar.ics.
 # <years> is the school year range, i.e., 2020-2021.
-if quarter == 1:
+if quarter == 'fall':
     # If the selected quarter is fall, it's at the beginning of the school year, so we want the calendar that starts
     # with the selected year. For example, to see start and end dates of the Fall 2020 quarter, we want the 2020-2021
     # calendar, not the 2019-2020 calendar.
     years = str(year) + '-' + str(int(year + 1))
-elif quarter == 2:
+elif quarter == 'winter':
     # If the selected quarter is *not* fall, it's at the end of the school year, so we want the calendar that starts
     # the year *before* the selected year. For example, to see start and end dates of the Winter 2021 quarter, we want
     # the 2020-2021 calendar, not the 2021-2022 calendar.
     years = str(int(year - 1)) + '-' + str(year)
-elif quarter == 3:
+elif quarter == 'spring':
     years = str(int(year - 1)) + '-' + str(year)
-elif quarter == 4:
+elif quarter == 'summer1':
     years = str(int(year - 1)) + '-' + str(year)
-elif quarter == 5:
+elif quarter == 'summer2':
     years = str(int(year - 1)) + '-' + str(year)
-else:  # If somehow 'quarter' is not an integer 1-5, then exit, although I believe that the script would exit sooner.
+else:  # If somehow 'quarter' is not one of the above, then exit, although I believe that the script would exit sooner.
     print('Invalid input.\nExiting...')
     sys.exit()
 
@@ -485,22 +470,20 @@ while True:
 # Find the quarter instruction start date
 i = 0
 for event in cal_events:
-    summary = event.summary
-    if ('begin' in summary) and ('struction' in summary):
-        i += 1
-        if i == quarter:
-            quarter_starts = event.start
-            break
+    summary = event.summary.lower()
+    print(summary)
+    if ('begin' in summary) and ('instruction' in summary) and (quarter in summary):
+        quarter_starts = event.start
+        break
 
 # Find quarter instruction end date
 i = 0
 for event in cal_events:
-    summary = event.summary
-    if ('end' in summary) and ('struction' in summary):
-        i += 1
-        if i == quarter:
-            quarter_ends = event.start
-            break
+    summary = event.summary.lower()
+    print(summary)
+    if ('end' in summary) and ('instruction' in summary) and (quarter in summary):
+        quarter_ends = event.start
+        break
 
 # Get all of the holidays (i.e., events that contain the word `day')
 for event in cal_events:
@@ -895,7 +878,7 @@ print('-------------------------------------------------------------------------
 try:
     # Ask the user if they want to add the events from the academic calendar to the calendar upload.
     include_academic_calendar = input('Do you want to include the academic calendar events in the calendar file? If\n'
-                                      'you have used this tool before, choose no. Otherwise, choose yes (Y/n): ').lower()
+                                      'you have used this tool this schoolyear before, choose no. Otherwise, choose yes \n(Y/n): ').lower()
     if include_academic_calendar == 'y' or include_academic_calendar == 'yes' or include_academic_calendar == '':
         f3.write(academic_calendar)  # Write the entirety of the contents of academic_calendar to the file
         f3.close()  # Close the file, we're done!
@@ -904,7 +887,7 @@ try:
         f3.close()  # Close the file, we're done!
     else:
         raise ValueError
-    print('--------------------------------------------------------------------------------')
+    print('\n--------------------------------------------------------------------------------')
 except ValueError:  # If the user inputs something other than nothing, 'y', 'yes', 'n', or 'no', then exit
     print('Invalid input.\nExiting...')
     f3.close()
