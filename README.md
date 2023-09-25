@@ -6,10 +6,6 @@ This script *should* work indefinitely, provided UCSD does not change WebReg or 
 
 This was a project done for fun on my own time, I do not make any guarantees about its functionality.
 
-# WARNING:
-
-**The current Windows executable listed in releases does not work and is broken.**
-
 # Usage
 
 There are two options, you can have the script either sign into WebReg for you and scrape the required information, or you can provide the program with an html copy of your WebReg page or just the table with your schedule on it. When providing the script with a copy of your WebReg page, make sure the file is located in the same directory as the script, and make sure the table is actually included in the file (double check by opening the .html file and look for the table there). If you do not see the table after saving the page, inspect element and copy and paste the html code for the table into a file and put it in the same document (make sure it has some sort of extension, if there is none, the script will assume you left out .html).
@@ -22,8 +18,6 @@ There are two options, you can have the script either sign into WebReg for you a
  - Open a terminal and navigate to the directory where you placed main.py and create a python environment by running `python -m venv .`
  - Install the additional required packages by running `./bin/pip install -r requirements.txt`
  - Run `./bin/python main.py` and follow the instructions.
-
-I am currently working on creating an executable that comes bundled with geckodriver that can simply be clicked.
 
 # Adding to Google Calendar
 * Go to [calendar.google.com](https://calendar.google.com/)
