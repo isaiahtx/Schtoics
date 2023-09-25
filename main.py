@@ -471,7 +471,6 @@ while True:
 i = 0
 for event in cal_events:
     summary = event.summary.lower()
-    print(summary)
     if ('begin' in summary) and ('instruction' in summary) and (quarter in summary):
         quarter_starts = event.start
         break
@@ -480,7 +479,6 @@ for event in cal_events:
 i = 0
 for event in cal_events:
     summary = event.summary.lower()
-    print(summary)
     if ('end' in summary) and ('instruction' in summary) and (quarter in summary):
         quarter_ends = event.start
         break
