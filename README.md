@@ -21,7 +21,7 @@ There are two options, you can have the script either sign into WebReg for you a
  - Download the [main.py](https://github.com/isaiahtx/Schtoics/blob/master/main.py) and [requirements.txt](https://github.com/isaiahtx/Schtoics/blob/master/requirements.txt) files and place them in the same directory.
  - Open a terminal and navigate to the directory where you placed main.py and create a python environment by running `python -m venv .`
  - Install the additional required packages by running `./bin/pip install -r requirements.txt`
- - Run `/bin/python main.py` and follow the instructions.
+ - Run `./bin/python main.py` and follow the instructions.
 
 I am currently working on creating an executable that comes bundled with geckodriver that can simply be clicked.
 
