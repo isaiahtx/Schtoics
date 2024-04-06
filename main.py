@@ -189,7 +189,7 @@ if (
                 "duo" in driver.title.lower()
             )  # Check if we've reached the authentication page
             print("Sign-in Successful.")
-            print("Waiting for page to load...")
+            print("DUO push sent")
             break  # If it is there, then break the loop, continue on
         except (
             AssertionError
@@ -215,7 +215,7 @@ if (
             ).click()  # Click the auth button
             # Look for the 'cancel request' button, which only comes up when the 2FA request button has been clicked
             # driver.find_element(By.CSS_SELECTOR, "button.btn-cancel")
-            print("Duo verified")
+            print("DUO verified.")
             break
         except (ElementNotInteractableException, NoSuchElementException):
             pass  # If any of the above steps fail, run through the whole thing repeatedly until it works
