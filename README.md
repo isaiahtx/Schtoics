@@ -1,3 +1,5 @@
+# Update: I graduated spring of 2024, so I have no way of verifying if this works anymore. Use at your own risk!
+
 
 # Schtoics
 Pronounced "Skuh-tow-icks", Schtoics is a tool that converts a UCSD WebReg schedule and the official UCSD Academic Calendar to a .ICS file that can be used in Google Calendar.
